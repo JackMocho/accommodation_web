@@ -1,76 +1,34 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '../utils/supabaseClient';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [location, setLocation] = useState({
-    lat: localStorage.getItem('userLat'),
-    lng: localStorage.getItem('userLng'),
-  });
-
-  // Auto-detect location on mount
-  useEffect(() => {
-    if (!location.lat || !location.lng) {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            setLocation({ lat: latitude, lng: longitude });
-            localStorage.setItem('userLat', latitude);
-            localStorage.setItem('userLng', longitude);
-          },
-          () => {}
-        );
-      }
-    }
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decoded = JSON.parse(atob(token.split('.')[0]));
-        setUser(decoded);
-        setIsAuthenticated(true);
-      } catch (err) {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    } else {
-      setUser(null);
-      setIsAuthenticated(false);
-    }
+    const session = supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  const login = (token) => {
-    localStorage.setItem('token', token);
-    const decoded = JSON.parse(atob(token.split('.')[1]));
-    setUser(decoded);
-    setIsAuthenticated(true);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userRole');
-    setUser(null);
-    setIsAuthenticated(false);
-  };
+  const signUp = (email, password) => supabase.auth.signUp({ email, password });
+  const signIn = (email, password) => supabase.auth.signInWithPassword({ email, password });
+  const signOut = () => supabase.auth.signOut();
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated,
-      login,
-      logout,
-      location,
-      setLocation,
-    }}>
+    <AuthContext.Provider value={{ user, signUp, signIn, signOut, loading }}>
       {children}
     </AuthContext.Provider>
   );

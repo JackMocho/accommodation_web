@@ -3,6 +3,7 @@ const db = require('../config/db');
 const { logError } = require('../utils/logger');
 const { verifyToken } = require('../utils/jwtUtils');
 const router = express.Router();
+const supabase = require('../utils/supabaseClient');
 
 // Send message (new or reply)
 router.post('/send', async (req, res) => {
@@ -126,6 +127,25 @@ router.get('/messages/admin/:adminId/:userId', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch admin-user messages' });
   }
+});
+
+// Get all chats for a user
+router.get('/user/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { data, error } = await supabase
+    .from('chats')
+    .select('*')
+    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// Send a message
+router.post('/message', async (req, res) => {
+  const message = req.body;
+  const { data, error } = await supabase.from('messages').insert([message]).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data[0]);
 });
 
 module.exports = router;

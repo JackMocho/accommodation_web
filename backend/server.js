@@ -27,6 +27,6 @@ const setupWebSocket = require('./websocket');
 setupWebSocket(server); // ✅ Now this works
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
