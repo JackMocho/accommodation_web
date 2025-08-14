@@ -1,5 +1,4 @@
 const express = require('express');
-const db = require('../config/db');
 const { logError } = require('../utils/logger');
 const { verifyToken } = require('../utils/jwtUtils');
 const router = express.Router();
