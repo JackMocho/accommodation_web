@@ -15,24 +15,21 @@ router.post('/submit', async (req, res) => {
     return res.status(400).json({ error: 'Monthly price required for rental' });
   }
 
-  // Encrypt images if needed, or just store as is
-  // const encryptedImages = images.map(img => encrypt(img));
-  // For now, just store as JSON
-  const imagesToStore = JSON.stringify(images);
-
-  let locationSQL = 'NULL';
-  let locationParams = [];
-  if (lat && lng) {
-    locationSQL = 'ST_SetSRID(ST_Point($9, $10), 4326)';
-    locationParams = [lng, lat];
-  }
-
   try {
-    await db.query(
-      `INSERT INTO rentals (title, description, price, nightly_price, type, mode, images, town, location, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ST_SetSRID(ST_Point($9, $10), 4326), $11)`,
-      [title, description, price, nightly_price, type, mode, JSON.stringify(images), town, lng, lat, user_id]
-    );
+    const { data, error } = await supabase.from('rentals').insert([{
+      title,
+      description,
+      price,
+      nightly_price,
+      type,
+      mode,
+      images: JSON.stringify(images),
+      town,
+      latitude: lat,
+      longitude: lng,
+      user_id
+    }]);
+    if (error) throw error;
     res.json({ message: 'Rental submitted successfully!' });
   } catch (err) {
     console.error(err);
@@ -43,25 +40,16 @@ router.post('/submit', async (req, res) => {
 // Get all rentals (admin only)
 router.get('/all', async (req, res) => {
   try {
-    const result = await db.query(`
-      SELECT r.*, 
-        CASE 
-          WHEN r.location IS NOT NULL 
-          THEN ST_AsGeoJSON(r.location)::json 
-          ELSE NULL 
-        END AS location_geojson,
-        u.full_name AS landlord_name
-      FROM rentals r
-      JOIN users u ON r.user_id = u.id
-      ORDER BY r.created_at DESC
-    `);
-    const rentals = result.rows.map(r => {
-      if (r.location_geojson) {
-        r.location = r.location_geojson;
-        delete r.location_geojson;
-      }
-      return r;
-    });
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('*, users!inner(full_name)')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    // Add landlord_name for compatibility
+    const rentals = data.map(r => ({
+      ...r,
+      landlord_name: r.users?.full_name || null
+    }));
     res.json(rentals);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch rentals' });
@@ -69,28 +57,18 @@ router.get('/all', async (req, res) => {
 });
 
 // Get rentals for the logged-in user
-router.get('/user', async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
-
-  let userId;
+router.get('/user/:user_id', async (req, res) => {
+  const { user_id } = req.params;
   try {
-    const decoded = verifyToken(token);
-    userId = decoded.id;
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-
-  try {
-    const result = await db.query(
-      `SELECT * FROM rentals
-       WHERE user_id = $1
-         AND (status = 'available' OR status = 'booked')
-         AND (mode = 'rental' OR mode = 'lodging' OR mode = 'airbnb')
-       ORDER BY created_at DESC`,
-      [userId]
-    );
-    res.json(result.rows);
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('*')
+      .eq('user_id', user_id)
+      .in('status', ['available', 'booked'])
+      .in('mode', ['rental', 'lodging', 'airbnb'])
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch rentals' });
   }
@@ -99,29 +77,20 @@ router.get('/user', async (req, res) => {
 // Get all rentals (public)
 router.get('/', async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT r.*, 
-        CASE 
-          WHEN r.location IS NOT NULL 
-          THEN ST_AsGeoJSON(r.location)::json 
-          ELSE NULL 
-        END AS location_geojson,
-        u.full_name AS landlord_name
-      FROM rentals r
-      JOIN users u ON r.user_id = u.id
-      WHERE r.status = 'available'
-        AND u.role = 'landlord'
-        AND u.approved = TRUE
-        AND (r.mode = 'rental' OR r.mode = 'lodging' OR r.mode = 'airbnb')
-      ORDER BY r.created_at DESC`
-    );
-    const rentals = result.rows.map(r => {
-      if (r.location_geojson) {
-        r.location = r.location_geojson;
-        delete r.location_geojson;
-      }
-      return r;
-    });
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('*, users!inner(full_name, role, approved)')
+      .eq('status', 'available')
+      .eq('users.role', 'landlord')
+      .eq('users.approved', true)
+      .in('mode', ['rental', 'lodging', 'airbnb'])
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    // Add landlord_name for compatibility
+    const rentals = data.map(r => ({
+      ...r,
+      landlord_name: r.users?.full_name || null
+    }));
     res.json(rentals);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch rentals' });
@@ -134,41 +103,37 @@ router.get('/nearby', async (req, res) => {
   if (!lat || !lng) {
     return res.status(400).json({ error: 'lat and lng required' });
   }
+  // Supabase/Postgres doesn't support geospatial queries via JS client directly.
+  // You may need to use a Postgres function or filter in JS for now.
+  // Here, we fetch all and filter in JS (not efficient for large datasets).
   const dist = distance || 5; // default 5km
   try {
-    const result = await db.query(
-      `
-      SELECT r.*, 
-        CASE 
-          WHEN r.location IS NOT NULL 
-          THEN ST_AsGeoJSON(r.location)::json 
-          ELSE NULL 
-        END AS location_geojson,
-        u.full_name AS landlord_name
-      FROM rentals r
-      JOIN users u ON r.user_id = u.id
-      WHERE r.location IS NOT NULL
-        AND r.status = 'available'
-        AND u.role = 'landlord'
-        AND u.approved = TRUE
-        AND (r.mode = 'rental' OR r.mode = 'lodging' OR r.mode = 'airbnb')
-        AND ST_DWithin(
-          r.location::geography,
-          ST_SetSRID(ST_Point($1, $2), 4326)::geography,
-          $3 * 1000
-        )
-      ORDER BY r.created_at DESC
-      `,
-      [lng, lat, dist]
-    );
-    const rentals = result.rows.map(r => {
-      if (r.location_geojson) {
-        r.location = r.location_geojson;
-        delete r.location_geojson;
-      }
-      return r;
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('*, users!inner(full_name, role, approved)')
+      .eq('status', 'available')
+      .eq('users.role', 'landlord')
+      .eq('users.approved', true)
+      .in('mode', ['rental', 'lodging', 'airbnb']);
+    if (error) throw error;
+    // Filter by distance in JS (Haversine formula)
+    const toRad = x => (x * Math.PI) / 180;
+    const R = 6371; // km
+    const filtered = data.filter(r => {
+      if (!r.latitude || !r.longitude) return false;
+      const dLat = toRad(r.latitude - lat);
+      const dLon = toRad(r.longitude - lng);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat)) *
+          Math.cos(toRad(r.latitude)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const d = R * c;
+      return d <= dist;
     });
-    res.json(rentals);
+    res.json(filtered);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch nearby rentals' });
   }
@@ -178,31 +143,20 @@ router.get('/nearby', async (req, res) => {
 router.get('/town/:town', async (req, res) => {
   const { town } = req.params;
   try {
-    const result = await db.query(
-      `SELECT r.*, 
-        CASE 
-          WHEN r.location IS NOT NULL 
-          THEN ST_AsGeoJSON(r.location)::json 
-          ELSE NULL 
-        END AS location_geojson,
-        u.full_name AS landlord_name
-      FROM rentals r
-      JOIN users u ON r.user_id = u.id
-      WHERE LOWER(r.town) = LOWER($1)
-        AND r.status = 'available'
-        AND u.role = 'landlord'
-        AND u.approved = TRUE
-        AND (r.mode = 'rental' OR r.mode = 'lodging' OR r.mode = 'airbnb')
-      ORDER BY r.created_at DESC`,
-      [town]
-    );
-    const rentals = result.rows.map(r => {
-      if (r.location_geojson) {
-        r.location = r.location_geojson;
-        delete r.location_geojson;
-      }
-      return r;
-    });
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('*, users!inner(full_name, role, approved)')
+      .eq('status', 'available')
+      .eq('users.role', 'landlord')
+      .eq('users.approved', true)
+      .ilike('town', town)
+      .in('mode', ['rental', 'lodging', 'airbnb'])
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    const rentals = data.map(r => ({
+      ...r,
+      landlord_name: r.users?.full_name || null
+    }));
     res.json(rentals);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch rentals by town' });

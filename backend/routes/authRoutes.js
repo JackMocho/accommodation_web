@@ -1,85 +1,52 @@
 const express = require('express');
-const db = require('../config/db'); // <-- use db, not { pool }
-const { signToken } = require('../utils/jwtUtils'); // Use your existing util
-
 const router = express.Router();
+const supabase = require('../utils/supabaseClient');
 
-// Register User
+// Register User (using Supabase Auth)
 router.post('/register', async (req, res) => {
-  const {
-    full_name,
-    email,
-    phone, // <-- Add this
-    password,
-    role = 'client',
-    town,
-    latitude,
-    longitude
-  } = req.body;
-
-  if (!full_name || !phone || !password) { // <-- Require phone
+  const { email, password, full_name, phone, role = 'client', town, latitude, longitude } = req.body;
+  if (!email || !password || !full_name) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-
   try {
-    let existingUser;
-    if (email) {
-      existingUser = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    } else {
-      existingUser = await db.query('SELECT * FROM users WHERE phone = $1', [phone]);
-    }
+    // Create user in Supabase Auth
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (authError) throw authError;
 
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-
-    await db.query(
-      `INSERT INTO users (full_name, email, phone, password, role, town, latitude, longitude)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [full_name, email, phone, password, role, town, latitude, longitude]
-    );
+    // Insert profile in users table
+    const { error: userError } = await supabase.from('users').insert([{
+      id: authUser.user.id,
+      full_name,
+      phone,
+      role,
+      town,
+      latitude,
+      longitude,
+      approved: false, // or true, depending on your logic
+    }]);
+    if (userError) throw userError;
 
     res.json({ message: 'Registration successful. Awaiting approval.' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
-// Login using email OR phone
+// Login using Supabase Auth
 router.post('/login', async (req, res) => {
-  const { identifier, password } = req.body;
-
-  if (!identifier || !password) {
-    return res.status(400).json({ error: 'Email/Phone and password are required' });
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
   }
-
   try {
-    const field = identifier.includes('@') ? 'email' : 'phone';
-    const result = await db.query(`SELECT * FROM users WHERE ${field} = $1`, [identifier]);
-    const user = result.rows[0];
-
-    if (!user || user.password !== password) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Only allow login if approved is true
-    if (!user.approved) {
-      return res.status(403).json({ error: 'Your account is not approved yet.' });
-    }
-
-    // Optionally, still block suspended users if you want:
-    if (user.status === 'suspended') {
-      return res.status(403).json({ error: 'Your account is suspended. Contact the administrator.' });
-    }
-
-    const token = signToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      // ...any other fields you want in the token
-    });
-    res.json({ token, user: { ...user, password: undefined } });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return res.status(401).json({ error: error.message });
+    res.json({ token: data.session.access_token, user: data.user });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });

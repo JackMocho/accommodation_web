@@ -1,164 +1,178 @@
 const express = require('express');
-const db = require('../config/db');
+const supabase = require('../utils/supabaseClient');
 const { protect, isAdmin } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // 1. User Management
 router.get('/users', async (req, res) => {
-  try {
-    const users = await db.query('SELECT * FROM users ORDER BY created_at DESC');
-    res.json(users.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch users.' });
-  }
+  const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: 'Failed to fetch users.' });
+  res.json(data);
 });
+
 router.patch('/users/:id/role', async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
-  try {
-    const result = await db.query(
-      'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, full_name, email, role',
-      [role, id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to update user role.' });
-  }
+  const { data, error } = await supabase
+    .from('users')
+    .update({ role })
+    .eq('id', id)
+    .select('id, name, email, role')
+    .single();
+  if (error) return res.status(500).json({ error: 'Failed to update user role.' });
+  res.json(data);
 });
+
 router.patch('/users/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  try {
-    const result = await db.query(
-      'UPDATE users SET status = $1 WHERE id = $2 RETURNING id, full_name, email, status',
-      [status, id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to update user status.' });
-  }
+  const { data, error } = await supabase
+    .from('users')
+    .update({ status })
+    .eq('id', id)
+    .select('id, name, email, status')
+    .single();
+  if (error) return res.status(500).json({ error: 'Failed to update user status.' });
+  res.json(data);
 });
+
 router.patch('/users/:id/approved', async (req, res) => {
   const { id } = req.params;
   const { approved } = req.body;
-  try {
-    const result = await db.query(
-      'UPDATE users SET approved = $1 WHERE id = $2 RETURNING id, full_name, email, approved',
-      [approved, id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to update user approval.' });
-  }
+  const { data, error } = await supabase
+    .from('users')
+    .update({ approved })
+    .eq('id', id)
+    .select('id, name, email, approved')
+    .single();
+  if (error) return res.status(500).json({ error: 'Failed to update user approval.' });
+  res.json(data);
 });
+
 // Suspend user and set approved to false
 router.put('/user/:id/suspend', async (req, res) => {
   const { id } = req.params;
-  try {
-    const userRes = await db.query('SELECT superuser FROM users WHERE id = $1', [id]);
-    if (userRes.rows.length && userRes.rows[0].superuser) {
-      return res.status(403).json({ error: 'You cannot suspend this Special User.' });
-    }
-    await db.query('UPDATE users SET suspended = true, approved = false WHERE id = $1', [id]);
-    res.json({ message: 'User suspended and moved to pending' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to suspend user' });
+  const { data: user, error: userError } = await supabase.from('users').select('superuser').eq('id', id).single();
+  if (userError) return res.status(500).json({ error: 'Failed to fetch user.' });
+  if (user && user.superuser) {
+    return res.status(403).json({ error: 'You cannot suspend this Special User.' });
   }
+  const { error } = await supabase.from('users').update({ suspended: true, approved: false }).eq('id', id);
+  if (error) return res.status(500).json({ error: 'Failed to suspend user' });
+  res.json({ message: 'User suspended and moved to pending' });
 });
+
 router.delete('/user/:id', async (req, res) => {
   const { id } = req.params;
-  const userRes = await db.query('SELECT superuser FROM users WHERE id = $1', [id]);
-  if (userRes.rows.length && userRes.rows[0].superuser) {
+  const { data: user, error: userError } = await supabase.from('users').select('superuser').eq('id', id).single();
+  if (userError) return res.status(500).json({ error: 'Failed to fetch user.' });
+  if (user && user.superuser) {
     return res.status(403).json({ error: ' Stop it! You can never Delete this Special User.' });
   }
-  await db.query('DELETE FROM users WHERE id = $1', [id]);
+  const { error } = await supabase.from('users').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: 'Failed to delete user.' });
   res.json({ message: 'User deleted' });
 });
+
 router.get('/active-users', async (req, res) => {
-  const users = await db.query('SELECT * FROM users WHERE approved = true AND suspended = false');
-  res.json(users.rows);
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('approved', true)
+    .eq('suspended', false);
+  if (error) return res.status(500).json({ error: 'Failed to fetch active users.' });
+  res.json(data);
 });
 
 // Get all pending users (not approved, not suspended)
 router.get('/pending-users', async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM users WHERE approved = false AND (suspended = false OR suspended IS NULL) ORDER BY created_at DESC'
-    );
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch pending users' });
-  }
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('approved', false)
+    .or('suspended.eq.false,suspended.is.null')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: 'Failed to fetch pending users' });
+  res.json(data);
 });
 
 // Approve a user (admin action)
 router.put('/approve-user/:id', protect, isAdmin, async (req, res) => {
   const userId = req.params.id;
-  try {
-    await db.query('UPDATE users SET approved = true, suspended = false WHERE id = $1', [userId]);
-    res.json({ message: 'User approved' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to approve user' });
-  }
+  const { error } = await supabase
+    .from('users')
+    .update({ approved: true, suspended: false })
+    .eq('id', userId);
+  if (error) return res.status(500).json({ error: 'Failed to approve user' });
+  res.json({ message: 'User approved' });
 });
 
 // 2. Rental Management
 router.get('/rentals', async (req, res) => {
-  const rentals = await db.query(`
-    SELECT r.*
-    FROM rentals r
-    JOIN users u ON r.landlord_id = u.id
-    WHERE u.status = 'approved'
-    ORDER BY r.created_at DESC
-  `);
-  res.json(rentals.rows);
+  // You may need to adjust this query for your schema
+  const { data, error } = await supabase
+    .from('rentals')
+    .select('*, landlord:landlord_id(*)')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: 'Failed to fetch rentals.' });
+  // Filter rentals where landlord.status === 'approved'
+  const filtered = data.filter(r => r.landlord && r.landlord.status === 'approved');
+  res.json(filtered);
 });
 
 router.put('/rental/:id/approve', async (req, res) => {
   const { id } = req.params;
-  await db.query('UPDATE rentals SET approved = true WHERE id = $1', [id]);
+  const { error } = await supabase.from('rentals').update({ approved: true }).eq('id', id);
+  if (error) return res.status(500).json({ error: 'Failed to approve rental.' });
   res.json({ message: 'Rental approved' });
 });
+
 // Admin: Delete any rental
 router.delete('/rental/:id', protect, isAdmin, async (req, res) => {
   const { id } = req.params;
-  try {
-    await db.query('DELETE FROM rentals WHERE id = $1', [id]);
-    res.json({ message: 'Rental deleted by admin' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete rental' });
-  }
+  const { error } = await supabase.from('rentals').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: 'Failed to delete rental' });
+  res.json({ message: 'Rental deleted by admin' });
 });
 
 // 3. Analytics (example: counts)
 router.get('/stats', async (req, res) => {
-  const users = await db.query('SELECT COUNT(*) FROM users');
-  const rentals = await db.query('SELECT COUNT(*) FROM rentals');
-  const activeRentals = await db.query('SELECT COUNT(*) FROM rentals WHERE status = $1', ['available']);
+  const { count: userCount, error: userError } = await supabase.from('users').select('*', { count: 'exact', head: true });
+  const { count: rentalCount, error: rentalError } = await supabase.from('rentals').select('*', { count: 'exact', head: true });
+  const { count: activeRentalCount, error: activeRentalError } = await supabase
+    .from('rentals')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'available');
+  if (userError || rentalError || activeRentalError) {
+    return res.status(500).json({ error: 'Failed to fetch stats.' });
+  }
   res.json({
-    totalUsers: users.rows[0].count,
-    totalRentals: rentals.rows[0].count,
-    activeRentals: activeRentals.rows[0].count,
+    totalUsers: userCount,
+    totalRentals: rentalCount,
+    activeRentals: activeRentalCount,
   });
 });
 
 // 4. Moderation: Reported messages/rentals
 router.get('/reports', async (req, res) => {
-  const reports = await db.query('SELECT * FROM reports ORDER BY created_at DESC');
-  res.json(reports.rows);
+  const { data, error } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: 'Failed to fetch reports.' });
+  res.json(data);
 });
 
 // 5. Announcements
 router.post('/announcement', async (req, res) => {
   const { message, target } = req.body;
-  // Save to DB or broadcast via websocket
+  // Save to DB or broadcast via websocket if needed
+  // Example: await supabase.from('announcements').insert([{ message, target }]);
   res.json({ message: 'Announcement sent' });
 });
 
 // 6. Audit Logs (example)
 router.get('/audit', async (req, res) => {
-  const logs = await db.query('SELECT * FROM audit_logs ORDER BY created_at DESC');
-  res.json(logs.rows);
+  const { data, error } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: 'Failed to fetch audit logs.' });
+  res.json(data);
 });
 
 module.exports = router;

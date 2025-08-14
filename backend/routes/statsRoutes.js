@@ -1,20 +1,34 @@
 const express = require('express');
-const db = require('../config/db');
 const router = express.Router();
+const supabase = require('../utils/supabaseClient');
 
 router.get('/counts', async (req, res) => {
   try {
     // Count active users (approved and not suspended)
-    const usersRes = await db.query("SELECT COUNT(*) FROM users WHERE approved = true AND (suspended = false OR suspended IS NULL)");
+    const { count: totalUsers, error: usersError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('approved', true)
+      .or('suspended.eq.false,suspended.is.null');
+    if (usersError) throw usersError;
+
     // Count all rentals
-    const rentalsRes = await db.query("SELECT COUNT(*) FROM rentals");
+    const { count: totalRentals, error: rentalsError } = await supabase
+      .from('rentals')
+      .select('*', { count: 'exact', head: true });
+    if (rentalsError) throw rentalsError;
+
     // Count active listings (status = 'available')
-    const activeRes = await db.query("SELECT COUNT(*) FROM rentals WHERE status = 'available'");
+    const { count: activeRentals, error: activeError } = await supabase
+      .from('rentals')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'available');
+    if (activeError) throw activeError;
 
     res.json({
-      totalUsers: parseInt(usersRes.rows[0].count, 10),
-      totalRentals: parseInt(rentalsRes.rows[0].count, 10),
-      activeRentals: parseInt(activeRes.rows[0].count, 10),
+      totalUsers,
+      totalRentals,
+      activeRentals,
     });
   } catch (err) {
     console.error('Error fetching stats:', err.message);
