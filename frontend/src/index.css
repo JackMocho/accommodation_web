@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-dark text-white min-h-screen font-sans;
+}
+
+input, select, textarea {
+  @apply rounded p-2 border border-gray-600 bg-gray-800 text-white;
+}
+
+button {
+  @apply rounded px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white;
+}
