@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const { pool } = require('./config/db');
+const supabase = require('./utils/supabaseClient');
 
 function setupWebSocket(server) {
   const wss = new WebSocket.Server({ server });
@@ -10,12 +10,18 @@ function setupWebSocket(server) {
         const data = JSON.parse(message.toString());
 
         if (data.type === 'SEND_MESSAGE') {
-          // Save to DB
-          await pool.query(
-            `INSERT INTO messages (sender_id, receiver_id, rental_id, message)
-             VALUES ($1, $2, $3, $4)`,
-            [data.sender_id, data.receiver_id, data.rental_id, data.message]
-          );
+          // Save to Supabase
+          const { error } = await supabase.from('messages').insert([{
+            sender_id: data.sender_id,
+            receiver_id: data.receiver_id,
+            rental_id: data.rental_id,
+            message: data.message,
+            created_at: new Date().toISOString()
+          }]);
+          if (error) {
+            console.error('Supabase insert error:', error.message);
+            return;
+          }
 
           // Broadcast to receiver
           wss.clients.forEach((client) => {
