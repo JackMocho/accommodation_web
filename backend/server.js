@@ -7,7 +7,10 @@ const app = express();
 const server = http.createServer(app);
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // set your frontend URL
+  origin: [
+    'https://accommodation-frontend-iyc3.onrender.com', // your deployed frontend
+    'http://localhost:5173' // for local development
+  ],
   credentials: true,
 }));
 // Increase the JSON body size limit to 10mb
