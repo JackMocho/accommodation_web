@@ -13,8 +13,8 @@ app.use(cors({
   ],
   credentials: true,
 }));
-// Increase the JSON body size limit to 10mb
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json());
+
 app.use('/api/chat', chatRoutes);
 
 // Mount routes
