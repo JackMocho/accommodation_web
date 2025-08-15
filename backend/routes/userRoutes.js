@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../utils/supabaseClient');
+const { protect } = require('../middleware/authMiddleware');
 
 // Get all users
-router.get('/', async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
     const { data: users, error } = await supabase
       .from('users')
