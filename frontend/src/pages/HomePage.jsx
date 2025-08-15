@@ -51,7 +51,7 @@ export default function HomePage() {
         </div>
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-6 drop-shadow-lg transition-all duration-500 hover:scale-105">
-            Find Your <span className="text-purple-400">Dream Accommodation & Residence  </span> Now!
+            Find Your <span className="text-purple-400">Dream Residence</span> Now!
           </h1>
           <p className="text-lg md:text-2xl mb-10 text-gray-200 font-light">
             Discover, advertise, and locate rentals and AirBnBs with a vibrant, efficient, secure community at your comfort.
