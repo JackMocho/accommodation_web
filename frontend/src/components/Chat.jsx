@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 
 export default function Chat({ rentalId, landlordId, userName, userPhone, adminUserId, otherUserId }) {
   const [messages, setMessages] = useState([]);
@@ -24,17 +24,15 @@ export default function Chat({ rentalId, landlordId, userName, userPhone, adminU
 
     if (isLandlord || hasSentFirst) {
       setLoading(true);
-      axios
-        .get(`http://localhost:5000/api/chat/messages/${rentalId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+      api
+        .get(`/chat/messages/${rentalId}`)
         .then((res) => setMessages(res.data))
         .catch(() => setMessages([]))
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [rentalId, userId, isLandlord, hasSentFirst, token]);
+  }, [rentalId, userId, isLandlord, hasSentFirst]);
 
   // Send message handler
   const sendMessage = async () => {
@@ -64,18 +62,12 @@ export default function Chat({ rentalId, landlordId, userName, userPhone, adminU
       return;
     }
     try {
-      await axios.post(
-        'http://localhost:5000/api/chat/send',
-        {
-          sender_id: userId,
-          receiver_id: receiverId,
-          message: messageToSend,
-          rental_id: rentalIdToSend,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await api.post('/chat/send', {
+        sender_id: userId,
+        receiver_id: receiverId,
+        message: messageToSend,
+        rental_id: rentalIdToSend,
+      });
       setNewMessage('');
       setHasSentFirst(true);
     } catch (err) {

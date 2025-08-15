@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import useAutoLocation from '../hooks/useAutoLocation';
 
 export default function Register() {
@@ -11,6 +11,7 @@ export default function Register() {
     town: '',
     latitude: '',
     longitude: '',
+    phone: '',
   });
 
   useAutoLocation(
@@ -48,7 +49,7 @@ export default function Register() {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/auth/register', form);
+      await api.post('/auth/register', form);
       alert('Registration successful! Awaiting approval.');
       window.location.href = '/login';
     } catch (err) {

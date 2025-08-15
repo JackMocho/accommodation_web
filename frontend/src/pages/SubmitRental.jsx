@@ -3,6 +3,7 @@ import axios from 'axios';
 import LocationPicker from '../components/LocationPicker';
 import useAutoLocation from '../hooks/useAutoLocation';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 
 export default function SubmitRental() {
   const navigate = useNavigate();
@@ -83,17 +84,13 @@ export default function SubmitRental() {
       lng: form.location?.coordinates?.[0],
       user_id: userId,
     };
-
     if (form.mode === 'lodging') {
       payload.nightly_price = Number(form.nightly_price);
     } else {
       payload.price = Number(form.price);
     }
-
     try {
-      await axios.post('http://localhost:5000/api/rentals/submit', payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post('/rentals/submit', payload);
       const successMsg = form.mode === 'lodging'
         ? 'Your property successfully listed as Lodging/AirBnB!'
         : 'Your property successfully listed!';
@@ -109,7 +106,6 @@ export default function SubmitRental() {
         mode: 'rental',
       });
       setPreviews([]);
-      // Redirect to landlord dashboard and pass success message
       navigate('/LandlordDashboard', { state: { successMsg } });
     } catch (err) {
       alert(err.response?.data?.error || 'Submission failed');

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 
 export default function Login() {
   const [identifier, setIdentifier] = useState('');
@@ -11,34 +11,22 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!identifier || !password) {
       alert('Please enter both identifier and password');
       return;
     }
-
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', {
+      const res = await api.post('/auth/login', {
         identifier,
         password,
       });
-
       localStorage.setItem('token', res.data.token);
-
-      // Decode JWT payload (second part)
       const decoded = JSON.parse(atob(res.data.token.split('.')[1]));
       localStorage.setItem('userId', decoded.id);
       localStorage.setItem('userRole', decoded.role);
-
-      // Optionally fetch and store userName
-      const userRes = await axios.get(`http://localhost:5000/api/users/${decoded.id}`, {
-        headers: { Authorization: `Bearer ${res.data.token}` }
-      });
+      const userRes = await api.get(`/users/${decoded.id}`);
       localStorage.setItem('userName', userRes.data.full_name);
-
       login(res.data.token);
-
-      // Redirect based on role
       if (decoded.role === 'admin') {
         navigate('/admin');
       } else if (decoded.role === 'landlord') {

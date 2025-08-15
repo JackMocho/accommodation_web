@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import Chat from '../components/Chat';
 import MapComponent from '../components/MapComponent';
@@ -19,12 +19,12 @@ export default function RentalDetail() {
   useEffect(() => {
     const fetchRental = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/rentals/${id}`);
+        const res = await api.get(`/rentals/${id}`);
         setRental(res.data);
 
         // Fetch landlord details if needed
         if (res.data.user_id) {
-          const userRes = await axios.get(`http://localhost:5000/api/users/${res.data.user_id}`);
+          const userRes = await api.get(`/users/${res.data.user_id}`);
           setLandlord(userRes.data);
         }
       } catch (err) {
@@ -34,28 +34,26 @@ export default function RentalDetail() {
     };
 
     fetchRental();
-  }, [id]);
+  }, [id, navigate]);
 
   // For landlord: fetch clients who have messaged about this rental
   useEffect(() => {
     const fetchClients = async () => {
       if (!rental || !decoded || decoded.id !== rental.user_id) return;
       try {
-        const res = await axios.get(`http://localhost:5000/api/chat/messages/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get(`/chat/messages/${id}`);
         // Get unique client IDs (exclude landlord)
         const clientIds = [
           ...new Set(
             res.data
               .map(msg => (msg.sender_id !== rental.user_id ? msg.sender_id : msg.receiver_id !== rental.user_id ? msg.receiver_id : null))
-              .filter(id => id && id !== rental.user_id)
+              .filter(cid => cid && cid !== rental.user_id)
           ),
         ];
         // Fetch client details
         const clientDetails = await Promise.all(
           clientIds.map(cid =>
-            axios.get(`http://localhost:5000/api/users/${cid}`).then(r => r.data)
+            api.get(`/users/${cid}`).then(r => r.data)
           )
         );
         setClients(clientDetails);
@@ -64,7 +62,7 @@ export default function RentalDetail() {
       }
     };
     fetchClients();
-  }, [rental, decoded, id, token]);
+  }, [rental, decoded, id]);
 
   const [lat, setLat] = useState(rental?.location?.coordinates?.[1] || null);
   const [lng, setLng] = useState(rental?.location?.coordinates?.[0] || null);

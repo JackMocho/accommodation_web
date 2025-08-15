@@ -1,16 +1,27 @@
 // src/hooks/useSocket.js
 import { useEffect, useState } from 'react';
 
+const WS_URL =
+  import.meta.env.VITE_WS_URL ||
+  (import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace(/^http/, 'ws')
+    : 'ws://localhost:5000');
+
 export default function useSocket() {
   const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:5000');
+    const ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
       setSocket(ws);
-      ws.send(JSON.stringify({ type: 'CLIENT_READY', id: localStorage.getItem('userId') }));
+      ws.send(
+        JSON.stringify({
+          type: 'CLIENT_READY',
+          id: localStorage.getItem('userId'),
+        })
+      );
     };
 
     ws.onmessage = (event) => {
@@ -18,7 +29,7 @@ export default function useSocket() {
         const msg = JSON.parse(event.data);
 
         if (msg.type === 'NEW_MESSAGE') {
-          setNotifications(prev => [
+          setNotifications((prev) => [
             ...prev,
             {
               from: msg.sender_id,
@@ -36,7 +47,11 @@ export default function useSocket() {
     return () => {
       ws.close();
     };
+    // eslint-disable-next-line
   }, []);
 
-  return { notifications, clearNotifications: () => setNotifications([]) };
+  return {
+    notifications,
+    clearNotifications: () => setNotifications([]),
+  };
 }

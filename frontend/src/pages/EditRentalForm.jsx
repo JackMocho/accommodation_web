@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 export default function EditRentalForm({ rental, onSave, onCancel }) {
   const [form, setForm] = useState({
@@ -79,9 +79,7 @@ export default function EditRentalForm({ rental, onSave, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/rentals/${rental.id}`, form, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.put(`/rentals/${rental.id}`, form);
       setSuccessMsg('Saved successfully!');
       if (onSave) onSave();
       setTimeout(() => setSuccessMsg(''), 1200);

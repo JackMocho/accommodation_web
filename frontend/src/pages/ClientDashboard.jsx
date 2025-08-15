@@ -7,6 +7,7 @@ import NotificationBell from '../components/NotificationBell';
 import MapComponent from '../components/MapComponent';
 import Chat from '../components/Chat'; // <-- Import Chat
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 
 function RentalCard({ rental }) {
   return (
@@ -62,8 +63,7 @@ export default function ClientDashboard() {
 
     const fetchAvailableRentals = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/rentals');
-        // Only show available rentals
+        const res = await api.get('/rentals');
         let filtered = res.data.filter(r => r.status === 'available');
         if (propertyType !== 'all') {
           filtered = filtered.filter(r => r.mode === propertyType);

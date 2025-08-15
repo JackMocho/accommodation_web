@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import ChatInbox from '../components/ChatInbox';
 import RentalCard from '../components/RentalCard';
 import Chat from '../components/Chat';
@@ -71,9 +71,7 @@ export default function AdminDashboard() {
   // Fetch pending users (not approved, not suspended)
   const fetchPendingUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/pending-users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get('/admin/pending-users');
       const users = Array.isArray(res.data) ? res.data : res.data.users || [];
       setPendingClients(users.filter(u => u.role === 'client'));
       setPendingLandlords(users.filter(u => u.role === 'landlord'));
@@ -85,9 +83,7 @@ export default function AdminDashboard() {
   // Fetch approved users (approved, not suspended)
   const fetchApprovedUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get('/admin/users');
       const users = Array.isArray(res.data) ? res.data : res.data.users || [];
       setApprovedUsers(users.filter(u => u.approved && !u.suspended));
     } catch (err) {
@@ -98,9 +94,7 @@ export default function AdminDashboard() {
   // Fetch suspended users
   const fetchSuspendedUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get('/admin/users');
       const users = Array.isArray(res.data) ? res.data : res.data.users || [];
       setSuspendedUsers(users.filter(u => u.suspended));
     } catch (err) {
@@ -112,8 +106,8 @@ export default function AdminDashboard() {
   const handleApprove = async (id) => {
     if (!window.confirm('Are you sure you want to approve this user?')) return;
     try {
-      await axios.put(
-        `http://localhost:5000/api/admin/approve-user/${id}`,
+      await api.put(
+        `/admin/approve-user/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -129,7 +123,7 @@ export default function AdminDashboard() {
   const handleApproveSuspended = async (id) => {
     if (!window.confirm('Approve this suspended user?')) return;
     try {
-      await axios.put(`http://localhost:5000/api/admin/user/${id}/approve`, {}, {
+      await api.put(`/admin/user/${id}/approve`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSuspendedUsers(users => users.filter(u => u.id !== id));
@@ -144,7 +138,7 @@ export default function AdminDashboard() {
   const handleSuspend = async (id) => {
     if (!window.confirm('Suspend this user?')) return;
     try {
-      await axios.put(`http://localhost:5000/api/admin/user/${id}/suspend`, {}, {
+      await api.put(`/admin/user/${id}/suspend`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchApprovedUsers();
@@ -158,7 +152,7 @@ export default function AdminDashboard() {
   const handleDeleteUser = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/user/${id}`, {
+      await api.delete(`/admin/user/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchApprovedUsers();
@@ -173,7 +167,7 @@ export default function AdminDashboard() {
   const handleDeleteRental = async (id) => {
     if (!window.confirm('Are you sure you want to delete this rental?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/rental/${id}`, {
+      await api.delete(`/admin/rental/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRentals(rentals.filter(r => r.id !== id));
@@ -187,7 +181,7 @@ export default function AdminDashboard() {
   const fetchRentals = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:5000/api/rentals/all', {
+      const res = await api.get('/rentals/all', {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Normalize location if needed
@@ -209,7 +203,7 @@ export default function AdminDashboard() {
   const fetchMessages = async () => {
     try {
       const userId = localStorage.getItem('userId');
-      const res = await axios.get(`http://localhost:5000/api/chat/messages/recent/${userId}`, {
+      const res = await api.get(`/chat/messages/recent/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessages(res.data);
@@ -222,7 +216,7 @@ export default function AdminDashboard() {
   // Fetch all users for management
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/users', {
+      const res = await api.get('/users', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setUsers(res.data);
@@ -237,8 +231,8 @@ export default function AdminDashboard() {
     setSuccess('');
     setError('');
     try {
-      await axios.patch(
-        `http://localhost:5000/api/users/${userId}/role`,
+      await api.patch(
+        `/users/${userId}/role`,
         { role: 'admin' },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -255,14 +249,14 @@ export default function AdminDashboard() {
   // Fetch all chats for the admin
   const fetchAllChats = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/users', {
+      const res = await api.get('/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const chatUsers = [];
       for (const u of res.data) {
         if (u.id !== adminUserId) {
-          const chatRes = await axios.get(
-            `http://localhost:5000/api/chat/messages/admin/${adminUserId}/${u.id}`,
+          const chatRes = await api.get(
+            `/chat/messages/admin/${adminUserId}/${u.id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           if (chatRes.data.length > 0) {
@@ -573,7 +567,7 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ))
-             )}
+              )}
             </tbody>
           </table>
         </div>
@@ -774,8 +768,8 @@ export default function AdminDashboard() {
                       onClick={async () => {
                         setSelectedChatUser(u);
                         // Fetch messages with this user
-                        const res = await axios.get(
-                          `http://localhost:5000/api/chat/messages/admin/${adminUserId}/${u.id}`,
+                        const res = await api.get(
+                          `/chat/messages/admin/${adminUserId}/${u.id}`,
                           { headers: { Authorization: `Bearer ${token}` } }
                         );
                         setChatMessages(res.data);
@@ -826,8 +820,8 @@ export default function AdminDashboard() {
                   <button
                     onClick={async () => {
                       if (!replyText.trim()) return;
-                      await axios.post(
-                        'http://localhost:5000/api/chat/send',
+                      await api.post(
+                        '/chat/send',
                         {
                           sender_id: adminUserId,
                           receiver_id: selectedChatUser.id,
@@ -837,8 +831,8 @@ export default function AdminDashboard() {
                       );
                       setReplyText('');
                       // Refresh chat
-                      const res = await axios.get(
-                        `http://localhost:5000/api/chat/messages/admin/${adminUserId}/${selectedChatUser.id}`,
+                      const res = await api.get(
+                        `/chat/messages/admin/${adminUserId}/${selectedChatUser.id}`,
                         { headers: { Authorization: `Bearer ${token}` } }
                       );
                       setChatMessages(res.data);

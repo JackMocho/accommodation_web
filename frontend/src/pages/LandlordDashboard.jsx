@@ -1,12 +1,12 @@
 // filepath: d:\Real property App\frontend\src\pages\LandlordDashboard.jsx
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import useSocket from '../hooks/useSocket';
 import NotificationBell from '../components/NotificationBell';
 import { useAuth } from '../context/AuthContext';
 import EditRentalForm from './EditRentalForm';
 import Chat from '../components/Chat';
+import api from '../utils/api';
 
 function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
   const navigate = useNavigate();
@@ -110,9 +110,7 @@ export default function LandlordDashboard() {
   // Fetch rentals
   const fetchRentals = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/rentals/user', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get('/rentals/user');
       setRentals(res.data);
     } catch (err) {
       console.error('Failed to load rentals:', err);
@@ -122,10 +120,7 @@ export default function LandlordDashboard() {
   // Fetch recent messages for landlord
   const fetchMessages = async () => {
     try {
-      // Use the recent inbox endpoint for richer sender info
-      const res = await axios.get(`http://localhost:5000/api/chat/messages/recent/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/chat/messages/recent/${userId}`);
       setMessages(res.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch (err) {
       setMessages([]);
@@ -135,9 +130,7 @@ export default function LandlordDashboard() {
   const fetchAllChats = async () => {
     try {
       // Fetch all messages where landlord is receiver for any rental
-      const res = await axios.get(`http://localhost:5000/api/chat/messages/recent/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get(`/chat/messages/recent/${userId}`);
       // Group by rental and client
       const chatUsers = [];
       for (const msg of res.data) {
@@ -178,9 +171,7 @@ export default function LandlordDashboard() {
   const handleDeleteRental = async (id) => {
     if (!window.confirm('Are you sure you want to delete this rental?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/rentals/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/rentals/${id}`);
       await fetchRentals();
       alert('Rental deleted successfully');
     } catch (err) {
@@ -192,15 +183,14 @@ export default function LandlordDashboard() {
   const handleReply = async (msg) => {
     if (!replyText.trim()) return;
     try {
-      await axios.post(
-        'http://localhost:5000/api/chat/send',
+      await api.post(
+        '/chat/send',
         {
           rental_id: msg.rental_id,
           sender_id: userId,
           receiver_id: msg.sender_id,
           message: replyText,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
       setReplyingTo(null);
       setReplyText('');
@@ -214,9 +204,7 @@ export default function LandlordDashboard() {
   const handleBookRental = async (id) => {
     if (!window.confirm('Mark this rental as Booked?')) return;
     try {
-      await axios.put(`http://localhost:5000/api/rentals/${id}/book`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/rentals/${id}/book`);
       await fetchRentals();
       alert('Rental marked as Booked!');
     } catch (err) {
@@ -228,9 +216,7 @@ export default function LandlordDashboard() {
   const handleMakeAvailable = async (id) => {
     if (!window.confirm('Mark this rental as available?')) return;
     try {
-      await axios.put(`http://localhost:5000/api/rentals/${id}/available`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/rentals/${id}/available`);
       await fetchRentals();
       alert('Rental marked as available!');
     } catch (err) {
@@ -442,9 +428,8 @@ export default function LandlordDashboard() {
                       onClick={async () => {
                         setSelectedChatUser(u);
                         // Fetch messages for this rental and client
-                        const res = await axios.get(
-                          `http://localhost:5000/api/chat/messages/${u.rentalId}`,
-                          { headers: { Authorization: `Bearer ${token}` } }
+                        const res = await api.get(
+                          `http://localhost:5000/api/chat/messages/${u.rentalId}`
                         );
                         setChatMessages(res.data.filter(
                           m => (m.sender_id === u.userId || m.receiver_id === u.userId)
@@ -499,21 +484,19 @@ export default function LandlordDashboard() {
                   <button
                     onClick={async () => {
                       if (!replyText.trim()) return;
-                      await axios.post(
-                        'http://localhost:5000/api/chat/send',
+                      await api.post(
+                        '/chat/send',
                         {
                           sender_id: userId,
                           receiver_id: selectedChatUser.userId,
                           message: replyText,
                           rental_id: selectedChatUser.rentalId,
-                        },
-                        { headers: { Authorization: `Bearer ${token}` } }
+                        }
                       );
                       setReplyText('');
                       // Refresh chat
-                      const res = await axios.get(
-                        `http://localhost:5000/api/chat/messages/${selectedChatUser.rentalId}`,
-                        { headers: { Authorization: `Bearer ${token}` } }
+                      const res = await api.get(
+                        `http://localhost:5000/api/chat/messages/${selectedChatUser.rentalId}`
                       );
                       setChatMessages(res.data.filter(
                         m => (m.sender_id === selectedChatUser.userId || m.receiver_id === selectedChatUser.userId)

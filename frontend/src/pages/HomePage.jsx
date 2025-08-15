@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
+import api from '../utils/api';
 
 export default function HomePage() {
   const [stats, setStats] = useState({
@@ -15,7 +15,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/stats/counts');
+        const res = await api.get('/stats/counts');
         setStats(res.data);
       } catch (err) {}
     };
@@ -26,7 +26,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchRentals = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/rentals');
+        const res = await api.get('/rentals');
         let filtered = res.data;
         if (propertyType !== 'all') {
           filtered = filtered.filter(r => r.mode === propertyType);

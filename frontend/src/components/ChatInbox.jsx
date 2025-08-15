@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { Link } from 'react-router-dom';
 
 const adminUserId = 1; // Set your actual admin user ID here
@@ -10,11 +10,7 @@ export default function ChatInbox({ userId }) {
   useEffect(() => {
     const fetchInbox = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/chat/messages/recent/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+        const res = await api.get(`/chat/messages/recent/${userId}`);
         setMessages(res.data);
       } catch (err) {
         console.error('Failed to load inbox:', err);

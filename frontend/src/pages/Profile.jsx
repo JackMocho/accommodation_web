@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../utils/api';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -27,12 +27,7 @@ export default function Profile() {
     const fetchUser = async () => {
       if (!user?.id) return;
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/users/${user.id}`,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }
-        );
+        const res = await api.get(`/users/${user.id}`);
         setForm({
           name: res.data.name || '',
           email: res.data.email || '',
@@ -55,11 +50,7 @@ export default function Profile() {
     setSuccess('');
     setError('');
     try {
-      const res = await axios.put(
-        `http://localhost:5000/api/users/${user.id}`,
-        { phone: form.phone },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
+      const res = await api.put(`/users/${user.id}`, { phone: form.phone });
       setSuccess('Phone number updated!');
       setForm(f => ({ ...f, phone: res.data.phone }));
     } catch {
@@ -80,14 +71,10 @@ export default function Profile() {
       return;
     }
     try {
-      await axios.post(
-        `http://localhost:5000/api/users/${user.id}/change-password`,
-        {
-          currentPassword: passwords.current,
-          newPassword: passwords.new,
-        },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
+      await api.post(`/users/${user.id}/change-password`, {
+        currentPassword: passwords.current,
+        newPassword: passwords.new,
+      });
       setPwSuccess('Password changed successfully!');
       setPasswords({ current: '', new: '', confirm: '' });
     } catch (err) {
@@ -138,10 +125,15 @@ export default function Profile() {
               <input
                 name="phone"
                 value={form.phone}
+                onChange={handlePhoneChange}
                 className="w-full p-2 rounded bg-gray-700 text-white"
-                readOnly
               />
-              
+              <button
+                type="submit"
+                className="bg-blue-700 px-4 py-2 rounded text-white"
+              >
+                Update
+              </button>
             </form>
           ) : (
             <input
