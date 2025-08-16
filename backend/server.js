@@ -2,20 +2,17 @@ const cors = require('cors');
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
-const chatRoutes = require('./routes/chatRoutes'); // <-- Add this line
 const app = express();
 const server = http.createServer(app);
 
 app.use(cors({
   origin: [
-    'https://accommodation-frontend-iyc3.onrender.com', // your deployed frontend
-    'http://localhost:5173' // for local development
+    'https://accommodation-frontend-iyc3.onrender.com',
+    'http://localhost:5173'
   ],
   credentials: true,
 }));
 app.use(express.json());
-
-app.use('/api/chat', chatRoutes);
 
 // Mount routes
 const adminRoutes = require('./routes/adminRoutes');
@@ -24,6 +21,7 @@ const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 const rentalRoutes = require('./routes/rentalRoutes');
 app.use('/api/rentals', rentalRoutes);
+
 const statsRoutes = require('./routes/statsRoutes');
 app.use('/api/stats', statsRoutes);
 const userRoutes = require('./routes/userRoutes');
