@@ -21,11 +21,11 @@ app.use('/api/admin', adminRoutes);
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-const rentalRoutes = require('./routes/rentalRoutes');
-app.use('/api/rentals', rentalRoutes);
-
 const statsRoutes = require('./routes/statsRoutes');
 app.use('/api/stats', statsRoutes);
+
+const rentalRoutes = require('./routes/rentalRoutes');
+app.use('/api/rentals', rentalRoutes);
 
 const chatRoutes = require('./routes/chatRoutes');
 app.use('/api/chat', chatRoutes);
