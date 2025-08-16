@@ -17,13 +17,19 @@ app.use(express.json());
 // Mount routes
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
+
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
+
 const rentalRoutes = require('./routes/rentalRoutes');
 app.use('/api/rentals', rentalRoutes);
 
 const statsRoutes = require('./routes/statsRoutes');
 app.use('/api/stats', statsRoutes);
+
+const chatRoutes = require('./routes/chatRoutes');
+app.use('/api/chat', chatRoutes);
+
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
 
