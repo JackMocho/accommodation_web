@@ -33,11 +33,17 @@ app.use('/api/chat', chatRoutes);
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
 
+// CORS-enabled 404 handler (should be after all routes)
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', [
     'https://accommodation-frontend-iyc3.onrender.com',
     'http://localhost:5173'
   ]);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
   res.status(404).json({ error: 'Not found' });
 });
 
