@@ -22,10 +22,10 @@ const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
-const statsRoutes = require('./routes/statsRoutes');
-app.use('/api/stats', statsRoutes);
 const rentalRoutes = require('./routes/rentalRoutes');
 app.use('/api/rentals', rentalRoutes);
+const statsRoutes = require('./routes/statsRoutes');
+app.use('/api/stats', statsRoutes);
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
 
