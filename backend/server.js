@@ -29,6 +29,14 @@ app.use('/api/stats', statsRoutes);
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
 
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', [
+    'https://accommodation-frontend-iyc3.onrender.com',
+    'http://localhost:5173'
+  ]);
+  res.status(404).json({ error: 'Not found' });
+});
+
 // Setup WebSockets
 const setupWebSocket = require('./websocket');
 setupWebSocket(server); // ✅ Now this works
