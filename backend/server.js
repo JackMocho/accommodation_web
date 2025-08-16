@@ -7,7 +7,7 @@ const server = http.createServer(app);
 
 app.use(cors({
   origin: [
-    'https://accommodation-frontend-iyc3.onrender.com',
+    'https://accommodation-web-pyz9.onrender.com',
     'http://localhost:5173'
   ],
   credentials: true,
