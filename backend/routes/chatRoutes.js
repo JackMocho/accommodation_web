@@ -67,6 +67,9 @@ router.get('/messages/:rental_id', async (req, res) => {
 // Fetch recent messages for a user (inbox)
 router.get('/messages/recent/:userId', async (req, res) => {
   const { userId } = req.params;
+  if (!userId) {
+    return res.status(400).json({ error: 'User id required' });
+  }
   try {
     const { data, error } = await supabase
       .from('messages')
@@ -76,7 +79,8 @@ router.get('/messages/recent/:userId', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch inbox' });
+    console.error('Chat fetch error:', err);
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 

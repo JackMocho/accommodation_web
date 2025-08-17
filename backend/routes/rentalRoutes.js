@@ -182,11 +182,7 @@ router.delete('/:id', async (req, res) => {
 
 // Get rentals for a specific user (expects user id in query or JWT)
 router.get('/user', async (req, res) => {
-  // Option 1: Get user id from query string
   const userId = req.query.id;
-  // Option 2: Get user id from JWT (recommended for protected routes)
-  // const userId = req.user?.id;
-
   if (!userId) {
     return res.status(400).json({ error: 'User id required' });
   }

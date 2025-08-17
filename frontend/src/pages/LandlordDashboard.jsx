@@ -100,7 +100,7 @@ export default function LandlordDashboard() {
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const token = localStorage.getItem('token');
-  const userId = localStorage.getItem('userId');
+  const userId = user?.id || localStorage.getItem('userId');
   const { notifications, clearNotifications } = useSocket();
   const { user } = useAuth();
   const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
@@ -109,7 +109,7 @@ export default function LandlordDashboard() {
   // Fetch rentals
   const fetchRentals = async () => {
     try {
-      const res = await api.get('/rentals/user');
+      const res = await api.get(`/rentals/user?id=${userId}`);
       setRentals(res.data);
     } catch (err) {
       console.error('Failed to load rentals:', err);
