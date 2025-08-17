@@ -55,7 +55,7 @@ export default function Navbar() {
           {isAuthenticated && (
             <div className="relative group">
               <button className="flex items-center gap-2 focus:outline-none">
-                <img src={user.avatar || '/avatar.png'} alt="avatar" className="w-8 h-8 rounded-full border-2 border-purple-400" />
+                {/* Avatar removed */}
                 <span className="text-white font-semibold">{user.name || 'Profile'}</span>
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
