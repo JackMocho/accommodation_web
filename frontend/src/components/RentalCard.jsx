@@ -48,7 +48,6 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
             Delete
           </button>
         )}
-        {/* Booked button only if not already booked */}
         {onBook && rental.status !== 'booked' && (
           <button
             onClick={() => onBook(rental.id)}
@@ -57,7 +56,7 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
             Mark as Booked
           </button>
         )}
-        {rental.status === 'booked' && (
+        {onMakeAvailable && rental.status === 'booked' && (
           <button
             onClick={() => onMakeAvailable(rental.id)}
             className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
