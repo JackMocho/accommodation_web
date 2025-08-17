@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
     if (user.role === 'admin') return <Navigate to="/AdminDashboard" />;
     if (user.role === 'landlord') return <Navigate to="/LandlordDashboard" />;
     if (user.role === 'client') return <Navigate to="/ClientDashboard" />;
-    return <Navigate to="/" />;
+   
   }
 
   return children;
