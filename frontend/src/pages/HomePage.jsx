@@ -4,9 +4,8 @@ import api from '../utils/api';
 
 export default function HomePage() {
   const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalRentals: 0,
-    activeRentals: 0,
+    users: 0,
+    rentals: 0,
   });
   const [randomRentals, setRandomRentals] = useState([]);
   const [propertyType, setPropertyType] = useState('all');
@@ -17,7 +16,7 @@ export default function HomePage() {
     const fetchStats = async () => {
       try {
         const res = await api.get('/stats/counts');
-        setStats(res.data);
+        setStats(res.data); // { rentals: 0, users: 2 }
       } catch (err) {}
     };
     fetchStats();
@@ -128,9 +127,9 @@ export default function HomePage() {
       {/* Stats Section */}
       <section className="py-14 px-4 bg-gradient-to-t from-blue-800 via-blue-700 to-purple-400">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <StatCard label="Total Users" value={stats.totalUsers} />
-          <StatCard label="Total Rentals" value={stats.totalRentals} />
-          <StatCard label="Active Listings" value={stats.activeRentals} />
+          <StatCard label="Total Users" value={stats.users} />
+          <StatCard label="Total Rentals" value={stats.rentals} />
+          <StatCard label="Active Listings" value={stats.rentals} />
         </div>
       </section>
 
