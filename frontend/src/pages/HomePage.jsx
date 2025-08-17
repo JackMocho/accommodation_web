@@ -10,6 +10,7 @@ export default function HomePage() {
   });
   const [randomRentals, setRandomRentals] = useState([]);
   const [propertyType, setPropertyType] = useState('all');
+  const [rentals, setRentals] = useState([]);
 
   // Fetch stats on load
   useEffect(() => {
@@ -27,19 +28,13 @@ export default function HomePage() {
     const fetchRentals = async () => {
       try {
         const res = await api.get('/rentals');
-        let filtered = res.data;
-        if (propertyType !== 'all') {
-          filtered = filtered.filter(r => r.mode === propertyType);
-        }
-        // Shuffle and pick 6 random rentals
-        const shuffled = filtered.sort(() => 0.5 - Math.random());
-        setRandomRentals(shuffled.slice(0, 6));
+        setRentals(res.data);
       } catch (err) {
-        setRandomRentals([]);
+        // handle error
       }
     };
     fetchRentals();
-  }, [propertyType]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-gray-900 text-white">

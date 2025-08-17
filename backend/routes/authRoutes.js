@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../utils/supabaseClient');
+const jwt = require('jsonwebtoken');
 
 // Register User (using Supabase Auth)
 router.post('/register', async (req, res) => {
@@ -27,6 +28,7 @@ router.post('/register', async (req, res) => {
       latitude,
       longitude,
       approved: false, // or true, depending on your logic
+      password, // store as plain text (not recommended for production)
     }]);
     if (userError) throw userError;
 
@@ -51,6 +53,22 @@ router.post('/login', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });
   }
+});
+
+// Legacy registration (plain text password, not recommended for production)
+router.post('/legacy-register', async (req, res) => {
+  const { name, email, password, phone } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const { data, error } = await supabase
+    .from('users')
+    .insert([{ name, email, password, phone }])
+    .select();
+  if (error) return res.status(500).json({ error: error.message });
+  // Optionally, create a JWT and return it
+  const token = jwt.sign({ id: data[0].id, email: data[0].email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  res.json({ user: data[0], token });
 });
 
 module.exports = router;

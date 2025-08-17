@@ -40,16 +40,19 @@ export default function Register() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-
-    if (!form.full_name || !form.phone || !form.password) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
     try {
-      await api.post('/auth/register', form);
+      await api.post('/auth/register', {
+        name: form.full_name,
+        email: form.email,
+        password: form.password,
+        phone: form.phone,
+        town: form.town,
+        latitude: form.latitude,
+        longitude: form.longitude,
+        role: form.role,
+      });
       alert('Registration successful! Awaiting approval.');
       window.location.href = '/login';
     } catch (err) {
@@ -61,7 +64,7 @@ export default function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900 px-2">
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleRegister}
         className="bg-gray-800 p-6 md:p-10 rounded shadow-md w-full max-w-md space-y-4"
       >
         <h2 className="text-xl font-bold mb-4 text-center">Register</h2>
