@@ -103,8 +103,7 @@ export default function LandlordDashboard() {
   const userId = localStorage.getItem('userId');
   const { notifications, clearNotifications } = useSocket();
   const { user } = useAuth();
-  const userName = user?.full_name || user?.name || '';
-  const userPhone = user?.phone || '';
+  const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
   const welcomeMsg = `Welcome, ${userName} (Landlord)`;
 
   // Fetch rentals
@@ -233,7 +232,6 @@ export default function LandlordDashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900">
-      {/* Top bar with tabs and notification */}
       <div className="mb-2">
         <h2 className="text-2xl font-bold">{welcomeMsg}</h2>
       </div>

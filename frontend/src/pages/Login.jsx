@@ -39,7 +39,7 @@ export default function Login() {
         navigate('/client-dashboard');
       }
     } catch (err) {
-      alert(err.response?.data?.error || 'Register as User first!');
+      alert(err.response?.data?.error || 'Login failed');
     }
   };
 

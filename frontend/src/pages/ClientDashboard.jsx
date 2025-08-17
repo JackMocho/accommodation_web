@@ -48,11 +48,9 @@ export default function ClientDashboard() {
   const [propertyType, setPropertyType] = useState('all');
   const [showAdminChat, setShowAdminChat] = useState(false);
   const token = localStorage.getItem('token');
-  const userName = localStorage.getItem('userName') || '';
-  const adminUserId = '1'; // Replace with actual admin user id if needed
-  const userId = localStorage.getItem('userId');
   const { notifications, clearNotifications } = useSocket();
   const { user } = useAuth();
+  const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
 
   useEffect(() => {
     if (!token) {
