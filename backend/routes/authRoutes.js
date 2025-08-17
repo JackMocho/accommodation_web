@@ -27,7 +27,8 @@ router.post('/register', async (req, res) => {
       town,
       latitude,
       longitude,
-      approved: false, // or true, depending on your logic
+      approved: false,
+      suspended: false, // <-- add this line!
       password, // store as plain text (not recommended for production)
     }]);
     if (userError) throw userError;
