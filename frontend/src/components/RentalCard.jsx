@@ -1,9 +1,8 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
+  const navigate = useNavigate();
 
-export default function RentalCard({ rental }) {
   return (
-    <div className="bg-gray-800 rounded shadow p-4 flex flex-col">
+    <div className="bg-gray-800 rounded shadow p-4 flex flex-col relative">
       <Link to={`/rentals/${rental.id}`}>
         {rental.images && rental.images.length > 0 && (
           <img
@@ -20,16 +19,47 @@ export default function RentalCard({ rental }) {
               KES {rental.nightly_price}/night
             </span>
           ) : (
-            <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">
+            <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
               KES {rental.price}/month
             </span>
           )}
           <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">{rental.type}</span>
           <span className="bg-yellow-700 text-white px-2 py-1 rounded text-xs">
-            {rental.status || 'available'}
+            {rental.status === 'booked' ? 'Booked' : (rental.status || 'available')}
           </span>
         </div>
       </Link>
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={() => onEdit(rental.id)}
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onDelete(rental.id)}
+          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+        >
+          Delete
+        </button>
+        {/* Booked button only if not already booked */}
+        {rental.status !== 'booked' && (
+          <button
+            onClick={() => onBook(rental.id)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+          >
+            Mark as Booked
+          </button>
+        )}
+        {rental.status === 'booked' && (
+          <button
+            onClick={() => onMakeAvailable(rental.id)}
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+          >
+            Mark as Available
+          </button>
+        )}
+      </div>
     </div>
   );
 }
