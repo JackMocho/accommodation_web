@@ -71,9 +71,10 @@ export default function Register() {
         <h2 className="text-xl font-bold mb-4 text-center">Register</h2>
 
         <input
+          name="full_name"
           type="text"
           value={form.full_name}
-          onChange={e => setForm({ ...form, full_name: e.target.value })}
+          onChange={handleChange}
           placeholder="Full Name"
           required
           className="w-full"
