@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const [identifier, setIdentifier] = useState('');
@@ -39,8 +39,7 @@ export default function Login() {
         navigate('/client-dashboard');
       }
     } catch (err) {
-      const message = err.response?.data?.error || 'Login failed';
-      alert(message);
+      alert(err.response?.data?.error || 'Register as User first!');
     }
   };
 
