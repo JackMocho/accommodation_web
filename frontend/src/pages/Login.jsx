@@ -15,11 +15,15 @@ export default function Login() {
       alert('Please enter both identifier and password');
       return;
     }
+
+    // Determine if identifier is email or phone
+    const isEmail = identifier.includes('@');
+    const payload = isEmail
+      ? { email: identifier, password }
+      : { phone: identifier, password };
+
     try {
-      const res = await api.post('/auth/login', {
-        identifier,
-        password,
-      });
+      const res = await api.post('/auth/login', payload);
       localStorage.setItem('token', res.data.token);
       const decoded = JSON.parse(atob(res.data.token.split('.')[1]));
       localStorage.setItem('userId', decoded.id);
