@@ -1,46 +1,13 @@
 // filepath: d:\Real property App\frontend\src\pages\LandlordDashboard.jsx
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 import useSocket from '../hooks/useSocket';
 import NotificationBell from '../components/NotificationBell';
 import MapComponent from '../components/MapComponent';
-import Chat from '../components/Chat'; // <-- Import Chat
+import Chat from '../components/Chat';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-
-function RentalCard({ rental }) {
-  return (
-    <div className="bg-gray-800 rounded shadow p-4 flex flex-col">
-      <Link to={`/rentals/${rental.id}`}>
-        {rental.images && rental.images.length > 0 && (
-          <img
-            src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
-            alt={rental.title}
-            className="w-full h-40 object-cover rounded mb-2"
-          />
-        )}
-        <h4 className="font-bold text-lg mb-1">{rental.title}</h4>
-        <p className="text-gray-400 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {rental.mode === 'lodging' ? (
-            <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
-              KES {rental.nightly_price}/night
-            </span>
-          ) : (
-            <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
-              KES {rental.price}/month
-            </span>
-          )}
-          <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">{rental.type}</span>
-          <span className="bg-yellow-700 text-white px-2 py-1 rounded text-xs">
-            {rental.status || 'available'}
-          </span>
-        </div>
-      </Link>
-    </div>
-  );
-}
+import RentalCard from '../components/RentalCard'; // <-- Use shared RentalCard
 
 export default function ClientDashboard() {
   const [availableRentals, setAvailableRentals] = useState([]);
@@ -90,7 +57,6 @@ export default function ClientDashboard() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Welcome, {userName} (Client)</h2>
       </div>
-      
 
       <section className="mb-8">
         <h3 className="text-xl font-semibold mb-4">Available Rentals & Lodgings</h3>
@@ -134,17 +100,15 @@ export default function ClientDashboard() {
         <h3 className="text-xl font-semibold mb-4">For Inquiries : Chat with Admin💬 </h3>
         <button>
           <a
-            
-               href="https://wa.me/254745420900"
-               target="_blank"
-                rel="noopener noreferrer"
-                className="text-2xl text-green-400 underline hover:text-green-300 transition"
-              >
-              WhatsApp
-
-              </a>
-              </button>
-           </div>
+            href="https://wa.me/254745420900"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-2xl text-green-400 underline hover:text-green-300 transition"
+          >
+            WhatsApp
+          </a>
+        </button>
+      </div>
     </div>
   );
 }
