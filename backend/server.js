@@ -5,12 +5,22 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  'https://accommodation-web-pyz9.onrender.com',
+  'https://accommodation-web.onrender.com',
+  'http://localhost:5173'
+];
+
 app.use(cors({
-  origin: [
-    'https://accommodation-web-pyz9.onrender.com', // your frontend
-    'https://accommodation-web.onrender.com',      // alternate frontend
-    'http://localhost:5173'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());

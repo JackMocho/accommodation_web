@@ -180,4 +180,19 @@ router.delete('/:id', async (req, res) => {
   res.status(204).send();
 });
 
+// Get rentals for a specific user (expects user id in query or JWT)
+router.get('/user', async (req, res) => {
+  // Option 1: Get user id from query string
+  const userId = req.query.id;
+  // Option 2: Get user id from JWT (recommended for protected routes)
+  // const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'User id required' });
+  }
+  const { data, error } = await supabase.from('rentals').select('*').eq('user_id', userId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 module.exports = router;
