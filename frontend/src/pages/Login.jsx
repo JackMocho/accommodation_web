@@ -25,15 +25,15 @@ export default function Login() {
     try {
       const res = await api.post('/auth/login', payload);
       localStorage.setItem('token', res.data.token);
-      const decoded = JSON.parse(atob(res.data.token.split('.')[1]));
-      localStorage.setItem('userId', decoded.id);
-      localStorage.setItem('userRole', decoded.role);
-      const userRes = await api.get(`/users/${decoded.id}`);
-      localStorage.setItem('userName', userRes.data.full_name);
+      localStorage.setItem('userId', res.data.user.id);
+      localStorage.setItem('userRole', res.data.user.role);
+      localStorage.setItem('userName', res.data.user.full_name || res.data.user.name || '');
       login(res.data.token);
-      if (decoded.role === 'admin') {
-        navigate('/admin');
-      } else if (decoded.role === 'landlord') {
+
+      // Redirect based on role
+      if (res.data.user.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (res.data.user.role === 'landlord') {
         navigate('/landlord-dashboard');
       } else {
         navigate('/client-dashboard');
