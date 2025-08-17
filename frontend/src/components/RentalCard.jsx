@@ -32,20 +32,24 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
         </div>
       </Link>
       <div className="flex gap-2 mt-2">
-        <button
-          onClick={() => onEdit(rental.id)}
-          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => onDelete(rental.id)}
-          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-        >
-          Delete
-        </button>
+        {onEdit && (
+          <button
+            onClick={() => onEdit(rental.id)}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+          >
+            Edit
+          </button>
+        )}
+        {onDelete && (
+          <button
+            onClick={() => onDelete(rental.id)}
+            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+          >
+            Delete
+          </button>
+        )}
         {/* Booked button only if not already booked */}
-        {rental.status !== 'booked' && (
+        {onBook && rental.status !== 'booked' && (
           <button
             onClick={() => onBook(rental.id)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
