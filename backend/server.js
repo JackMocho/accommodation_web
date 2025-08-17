@@ -7,7 +7,8 @@ const server = http.createServer(app);
 
 app.use(cors({
   origin: [
-    'https://accommodation-web-pyz9.onrender.com',
+    'https://accommodation-web-pyz9.onrender.com', // your frontend
+    'https://accommodation-web.onrender.com',      // alternate frontend
     'http://localhost:5173'
   ],
   credentials: true,
@@ -36,7 +37,8 @@ app.use('/api/users', userRoutes);
 // CORS-enabled 404 handler (should be after all routes)
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', [
-    'https://accommodation-frontend-iyc3.onrender.com',
+    'https://accommodation-web-pyz9.onrender.com',
+    'https://accommodation-web.onrender.com',
     'http://localhost:5173'
   ]);
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
