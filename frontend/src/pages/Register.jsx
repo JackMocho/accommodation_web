@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../utils/api';
 import useAutoLocation from '../hooks/useAutoLocation';
+import { useNavigate } from 'react-router-dom';
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -13,6 +14,8 @@ export default function Register() {
     longitude: '',
     phone: '',
   });
+
+  const navigate = useNavigate();
 
   useAutoLocation(
     (lat) => setForm(f => ({ ...f, latitude: lat })),
@@ -47,15 +50,15 @@ export default function Register() {
       await api.post('/auth/register', {
         email: form.email,
         password: form.password,
-        full_name: form.full_name, // <-- must be present!
-        phone: form.phone,     // optional
-        role: form.role,      // optional
-        town: form.town,      // optional
-        latitude: form.latitude,  // optional
-        longitude: form.longitude, // optional
+        full_name: form.full_name,
+        phone: form.phone,
+        role: form.role,
+        town: form.town,
+        latitude: form.latitude,
+        longitude: form.longitude,
       });
       alert('Registration successful! Awaiting approval.');
-      window.location.href = '/login';
+      navigate('/'); // Redirect to HomePage.jsx
     } catch (err) {
       console.error('Registration failed:', err.response?.data || err.message);
       alert('Registration failed. Please try again.');
