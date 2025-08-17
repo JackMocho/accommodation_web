@@ -40,18 +40,19 @@ export default function Register() {
     }
   };
 
+  // Example registration handler
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
       await api.post('/auth/register', {
-        name: form.full_name,
         email: form.email,
         password: form.password,
-        phone: form.phone,
-        town: form.town,
-        latitude: form.latitude,
-        longitude: form.longitude,
-        role: form.role,
+        full_name: form.full_name, // <-- must be present!
+        phone: form.phone,     // optional
+        role: form.role,      // optional
+        town: form.town,      // optional
+        latitude: form.latitude,  // optional
+        longitude: form.longitude, // optional
       });
       alert('Registration successful! Awaiting approval.');
       window.location.href = '/login';
@@ -70,9 +71,10 @@ export default function Register() {
         <h2 className="text-xl font-bold mb-4 text-center">Register</h2>
 
         <input
-          name="full_name"
+          type="text"
+          value={form.full_name}
+          onChange={e => setForm({ ...form, full_name: e.target.value })}
           placeholder="Full Name"
-          onChange={handleChange}
           required
           className="w-full"
         />
