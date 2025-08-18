@@ -9,6 +9,7 @@ import Chat from '../components/Chat';
 import api from '../utils/api';
 import RentalCard from '../components/RentalCard';
 import axios from 'axios';
+import MapComponent from '../components/MapComponent';
 
 export default function LandlordDashboard() {
   const [rentals, setRentals] = useState([]);
@@ -24,6 +25,7 @@ export default function LandlordDashboard() {
   const [allChats, setAllChats] = useState([]);
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
+  const [selectedRental, setSelectedRental] = useState(null);
   const { notifications, clearNotifications } = useSocket();
   const { user } = useAuth();
   const token = localStorage.getItem('token');
@@ -299,28 +301,34 @@ export default function LandlordDashboard() {
               <div key={r.id} className="mb-6">
                 {/* Show rental title clearly above the card */}
                 <h4 className="font-bold text-lg mb-2 text-white">{r.title}</h4>
-                <RentalCard
-                  rental={r}
-                  onDelete={handleDeleteRental}
-                  onEdit={setEditingRentalId}
-                  actionButton={
-                    r.status === 'available' ? (
-                      <button
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded mt-2"
-                        onClick={() => handleBookRental(r.id)}
-                      >
-                        Mark as Booked
-                      </button>
-                    ) : (
-                      <button
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded mt-2"
-                        onClick={() => handleMakeAvailable(r.id)}
-                      >
-                        Mark as Available
-                      </button>
-                    )
-                  }
-                />
+                <div
+                  className="cursor-pointer"
+                  onClick={() => setSelectedRental(r)}
+                  title="Click to view details and map"
+                >
+                  <RentalCard
+                    rental={r}
+                    onDelete={handleDeleteRental}
+                    onEdit={setEditingRentalId}
+                    actionButton={
+                      r.status === 'available' ? (
+                        <button
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded mt-2"
+                          onClick={e => { e.stopPropagation(); handleBookRental(r.id); }}
+                        >
+                          Mark as Booked
+                        </button>
+                      ) : (
+                        <button
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded mt-2"
+                          onClick={e => { e.stopPropagation(); handleMakeAvailable(r.id); }}
+                        >
+                          Mark as Available
+                        </button>
+                      )
+                    }
+                  />
+                </div>
                 {editingRentalId === r.id && (
                   <EditRentalForm
                     rental={r}
@@ -333,7 +341,30 @@ export default function LandlordDashboard() {
           </div>
         )}
       </section>
-
+      {/* Rental detail modal with map */}
+      {selectedRental && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
+              onClick={() => setSelectedRental(null)}
+            >
+              &times;
+            </button>
+            <h2 className="text-2xl font-bold mb-2">{selectedRental.title}</h2>
+            <p className="mb-2">{selectedRental.description}</p>
+            <div className="mb-4">
+              <strong>Status:</strong> {selectedRental.status}
+            </div>
+            <div className="mb-4">
+              <MapComponent
+                rentals={[selectedRental]}
+                height="h-64"
+              />
+            </div>
+          </div>
+        </div>
+      )}
       {/* View All Messages Section */}
       <div className="flex gap-4 mb-8">
         <button

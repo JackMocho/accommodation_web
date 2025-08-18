@@ -91,7 +91,12 @@ export default function ClientDashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleRentals.map(rental => (
-              <RentalCard key={rental.id} rental={rental} />
+              <div key={rental.id} className="mb-6">
+                <RentalCard rental={rental} />
+                <div className="mt-2">
+                  <MapComponent rentals={[rental]} height="h-48" />
+                </div>
+              </div>
             ))}
           </div>
         )}
