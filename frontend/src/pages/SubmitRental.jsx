@@ -80,9 +80,10 @@ export default function SubmitRental() {
       mode: form.mode,
       type: form.type,
       status: form.status,
-      images: form.images, // usually an array or a stringified array
+      images: JSON.stringify(form.images), // <-- submit as JSON string
       location: { coordinates: [lng, lat] },
       landlord_id: userId,
+      town: form.town,
     };
     if (form.mode === 'lodging') {
       payload.nightly_price = Number(form.nightly_price);
