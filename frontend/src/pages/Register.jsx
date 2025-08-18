@@ -86,9 +86,11 @@ export default function Register() {
 
         <input
           name="email"
-          placeholder="Email (optional)"
+          placeholder="Email"
           type="email"
+          value={form.email}
           onChange={handleChange}
+          required
           className="w-full"
         />
 
