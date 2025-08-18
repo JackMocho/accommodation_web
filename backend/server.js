@@ -7,18 +7,18 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   'https://accommodation-web-pyz9.onrender.com',
+  'https://accommodation-web.onrender.com',
   'http://localhost:5173'
 ];
-
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
     }
-    return callback(null, true);
   },
   credentials: true,
 }));
