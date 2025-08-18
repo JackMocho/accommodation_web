@@ -1,6 +1,6 @@
 // filepath: d:\Real property App\frontend\src\pages\LandlordDashboard.jsx
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import useSocket from '../hooks/useSocket';
 import NotificationBell from '../components/NotificationBell';
 import { useAuth } from '../context/AuthContext';
@@ -34,6 +34,7 @@ export default function LandlordDashboard() {
   const userPhone = user?.phone || localStorage.getItem('userPhone') || '';
   const welcomeMsg = `Welcome, ${userName} (Landlord)`;
   const adminUserId = '1';
+  const navigate = useNavigate();
 
   // Fetch rentals
   const fetchRentals = async () => {
@@ -299,11 +300,11 @@ export default function LandlordDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleRentals.map((r) => (
               <div key={r.id} className="mb-6">
-                {/* Show rental title clearly above the card */}
                 <h4 className="font-bold text-lg mb-2 text-white">{r.title}</h4>
+                {/* Make the card clickable to go to RentalDetail */}
                 <div
                   className="cursor-pointer"
-                  onClick={() => setSelectedRental(r)}
+                  onClick={() => navigate(`/rentals/${r.id}`)}
                   title="Click to view details and map"
                 >
                   <RentalCard

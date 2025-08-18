@@ -46,11 +46,7 @@ export default function App() {
 
             <Route
               path="/rentals/:id"
-              element={
-                <ProtectedRoute>
-                  <RentalDetail />
-                </ProtectedRoute>
-              }
+              element={<RentalDetail />}
             />
 
             {/* Protected Admin Routes */}
