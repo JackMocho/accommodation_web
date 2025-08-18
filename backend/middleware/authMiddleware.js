@@ -1,5 +1,6 @@
 // backend/middleware/authMiddleware.js
 
+const jwt = require('jsonwebtoken');
 const supabase = require('../utils/supabaseClient');
 
 // Auth middleware using Supabase JWT
@@ -10,12 +11,17 @@ const protect = async (req, res, next) => {
   }
   const token = authHeader.split(' ')[1];
   try {
-    // Validate JWT with Supabase
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data?.user) {
-      return res.status(401).json({ error: 'Token is not valid' });
+    // Verify JWT using your secret
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Fetch user from DB to get role
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', decoded.id);
+    if (error || !users || users.length === 0) {
+      return res.status(401).json({ error: 'User not found' });
     }
-    req.user = data.user;
+    req.user = users[0]; // Attach full user object including role
     next();
   } catch (err) {
     res.status(401).json({ error: 'Token is not valid' });
