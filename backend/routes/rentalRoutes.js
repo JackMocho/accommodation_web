@@ -4,36 +4,50 @@ const supabase = require('../utils/supabaseClient');
 
 // Submit new rental
 router.post('/submit', async (req, res) => {
-  const { title, description, price, nightly_price, type, mode, lat, lng, user_id, images, town } = req.body;
-  if (!title || !type || !mode || !user_id) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-  if (mode === 'lodging' && !nightly_price) {
-    return res.status(400).json({ error: 'Nightly price required for lodging' });
-  }
-  if (mode === 'rental' && !price) {
-    return res.status(400).json({ error: 'Monthly price required for rental' });
-  }
-
   try {
-    const { data, error } = await supabase.from('rentals').insert([{
+    const {
       title,
       description,
       price,
-      nightly_price,
-      type,
       mode,
-      images: JSON.stringify(images),
-      town,
-      latitude: lat,
-      longitude: lng,
-      user_id
-    }]);
-    if (error) throw error;
-    res.json({ message: 'Rental submitted successfully!' });
+      type,
+      status,
+      images,
+      location,
+      landlord_id,
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !price || !mode || !type || !landlord_id) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Insert into DB
+    const { data, error } = await supabase
+      .from('rentals')
+      .insert([
+        {
+          title,
+          description,
+          price,
+          mode,
+          type,
+          status: status || 'available',
+          images: Array.isArray(images) ? JSON.stringify(images) : images,
+          location,
+          landlord_id,
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    res.json({ success: true, rental: data[0] });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to submit rental' });
+    console.error('Rental submit error:', err);
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 

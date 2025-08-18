@@ -76,13 +76,13 @@ export default function SubmitRental() {
     const payload = {
       title: form.title,
       description: form.description,
-      type: form.type,
+      price: form.price,
       mode: form.mode,
-      images: form.images,
-      town: form.town,
-      lat: form.location?.coordinates?.[1],
-      lng: form.location?.coordinates?.[0],
-      user_id: userId,
+      type: form.type,
+      status: form.status,
+      images: form.images, // usually an array or a stringified array
+      location: { coordinates: [lng, lat] },
+      landlord_id: userId,
     };
     if (form.mode === 'lodging') {
       payload.nightly_price = Number(form.nightly_price);
