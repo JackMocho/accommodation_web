@@ -59,14 +59,17 @@ router.post('/login', async (req, res) => {
     }
     const user = users[0];
 
-    // Check password (hashed)
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    // Compare plain text password
+    if (user.password !== password) {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
     // Create JWT
-    const token = jwt.sign({ id: user.id, email: user.email, phone: user.phone }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, phone: user.phone },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
     res.json({ user, token });
   } catch (err) {
     console.error(err);
