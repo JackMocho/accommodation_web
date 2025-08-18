@@ -25,6 +25,9 @@ router.post('/register', async (req, res) => {
           town,
           latitude,
           longitude,
+          suspended:false,
+          superuser:false,
+          approved: false // <-- ensure new users are not approved by default
         }
       ]);
     if (error) return res.status(500).json({ error: error.message });
