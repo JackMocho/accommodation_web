@@ -80,7 +80,8 @@ export default function SubmitRental() {
     const payload = {
       title: form.title,
       description: form.description,
-      price: form.price,
+      price: form.mode === 'lodging' ? 0 : Number(form.price) || 0,
+      nightly_price: form.mode === 'lodging' ? Number(form.nightly_price) || 0 : 0,
       mode: form.mode,
       type: form.type,
       status: form.status,

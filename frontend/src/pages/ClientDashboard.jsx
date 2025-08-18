@@ -13,7 +13,6 @@ export default function ClientDashboard() {
   const [availableRentals, setAvailableRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [propertyType, setPropertyType] = useState('all');
-  const [showAdminChat, setShowAdminChat] = useState(false);
   const token = localStorage.getItem('token');
   const { notifications, clearNotifications } = useSocket();
   const { user } = useAuth();
@@ -27,18 +26,16 @@ export default function ClientDashboard() {
     }
 
     const fetchAvailableRentals = async () => {
+      setLoading(true);
       try {
         const res = await api.get('/rentals');
-        let filtered = res.data.filter(r => r.status === 'available');
-        if (propertyType !== 'all') {
-          filtered = filtered.filter(r => r.mode === propertyType);
-        }
+        // Only show rentals with status 'available'
+        const filtered = res.data.filter(r => r.status === 'available');
         setAvailableRentals(filtered);
       } catch (err) {
         setAvailableRentals([]);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     fetchAvailableRentals();

@@ -22,13 +22,11 @@ router.post('/submit', async (req, res) => {
       location,
     } = req.body;
 
-    // Accept either price or nightly_price
-    const finalPrice = price || nightly_price;
     // Accept either user_id or landlord_id
     const finalLandlordId = landlord_id || user_id;
 
     // Validate required fields
-    if (!title || !finalPrice || !mode || !type || !finalLandlordId) {
+    if (!title || !mode || !type || !finalLandlordId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -38,6 +36,10 @@ router.post('/submit', async (req, res) => {
       finalLocation = { coordinates: [lng, lat] };
     }
 
+    // Ensure both price and nightly_price are numbers (default to 0)
+    const monthlyPrice = Number(price) || 0;
+    const nightlyPrice = Number(nightly_price) || 0;
+
     // Insert into DB
     const { data, error } = await supabase
       .from('rentals')
@@ -45,16 +47,16 @@ router.post('/submit', async (req, res) => {
         {
           title,
           description,
-          price: price || null,
-          nightly_price: nightly_price || null,
+          price: monthlyPrice,
+          nightly_price: nightlyPrice,
           mode,
           type,
           status: status || 'available',
-          images: images, // <-- remove JSON.stringify
+          images: images,
           location: finalLocation,
           town,
           landlord_id: finalLandlordId,
-          user_id: finalLandlordId, // for compatibility
+          user_id: finalLandlordId,
           latitude: lat || null,
           longitude: lng || null,
         }
