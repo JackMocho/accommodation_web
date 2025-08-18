@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 
-function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
+const RentalCard = ({ rental, onDelete, onEdit, onBook, onMakeAvailable }) => {
   const navigate = useNavigate();
 
   return (
