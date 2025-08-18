@@ -22,12 +22,17 @@ export default function HomePage() {
     fetchStats();
   }, []);
 
-  // Fetch rentals and filter by property type
+  // Fetch rentals and filter by property type and status === 'available'
   useEffect(() => {
     const fetchRentals = async () => {
       try {
         const res = await api.get('/rentals');
-        setRentals(res.data);
+        // Only show rentals with status 'available'
+        const availableRentals = res.data.filter(r => r.status === 'available');
+        setRentals(availableRentals);
+
+        // If you use randomRentals for featured, also filter here:
+        setRandomRentals(availableRentals.slice(0, 6)); // or any logic you want
       } catch (err) {
         // handle error
       }
