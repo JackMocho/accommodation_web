@@ -91,10 +91,18 @@ export default function RentalDetail() {
         <p className="text-gray-300 mb-4">{rental.description}</p>
 
         <div className="flex flex-wrap gap-2 mb-4">
-          <span className="bg-green-700 text-white px-3 py-1 rounded">KES {rental.price}/month</span>
+          {rental.mode === 'lodging' ? (
+            <span className="bg-green-700 text-white px-3 py-1 rounded">
+              KES {rental.nightly_price}/night
+            </span>
+          ) : (
+            <span className="bg-green-700 text-white px-3 py-1 rounded">
+              KES {rental.price}/month
+            </span>
+          )}
           <span className="bg-blue-700 text-white px-3 py-1 rounded">{rental.type}</span>
           <span className="bg-yellow-700 text-white px-3 py-1 rounded">
-            {rental.status || 'available'}
+            {rental.status === 'booked' ? 'Booked' : 'Available'}
           </span>
         </div>
 
