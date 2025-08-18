@@ -10,27 +10,27 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Email is required' });
   }
   try {
-    // Store password as plain text (NOT recommended for production)
-    // const hashedPassword = await bcrypt.hash(password, 10);
-
     const { data, error } = await supabase
       .from('users')
       .insert([
         {
           email,
-          password, // store as plain text
+          password,
           full_name,
           phone,
           role,
           town,
           latitude,
           longitude,
-          suspended:false,
-          superuser:false,
-          approved: false // <-- ensure new users are not approved by default
+          suspended: false,
+          superuser: false,
+          approved: false
         }
-      ]);
+      ])
+      .select(); // <-- Add this to get the inserted row
+
     if (error) return res.status(500).json({ error: error.message });
+    if (!data || data.length === 0) return res.status(500).json({ error: 'User registration failed' });
     res.json({ success: true, user: data[0] });
   } catch (err) {
     console.error(err);
