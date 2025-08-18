@@ -73,8 +73,9 @@ export default function AdminDashboard() {
 
   // Approve user
   const handleApproveUser = async (id) => {
+    const token = localStorage.getItem('token');
     if (!token) {
-      setError('Session expired. Please log in again.');
+      alert('Session expired. Please log in again.');
       return;
     }
     try {
@@ -87,7 +88,7 @@ export default function AdminDashboard() {
       fetchPendingUsers();
       fetchUsers();
     } catch (err) {
-      setError(
+      alert(
         err.response?.data?.error === 'Token is not valid'
           ? 'Session expired or unauthorized. Please log in as admin.'
           : 'Failed to approve user.'
@@ -337,7 +338,7 @@ export default function AdminDashboard() {
                   <span className="text-xs text-gray-400 ml-2">{new Date(msg.created_at).toLocaleString()}</span>
                 </div>
               ))
-            )}
+      )}
           </div>
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <input
