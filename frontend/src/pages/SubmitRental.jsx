@@ -73,6 +73,10 @@ export default function SubmitRental() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Ensure lat/lng are numbers
+    const latitude = typeof lat === 'number' ? lat : null;
+    const longitude = typeof lng === 'number' ? lng : null;
+
     const payload = {
       title: form.title,
       description: form.description,
@@ -81,9 +85,11 @@ export default function SubmitRental() {
       type: form.type,
       status: form.status,
       images: form.images, // <-- send as array
-      location: { coordinates: [lng, lat] },
+      location: { coordinates: [longitude, latitude] },
       landlord_id: userId,
       town: form.town,
+      lat: latitude,
+      lng: longitude,
     };
     if (form.mode === 'lodging') {
       payload.nightly_price = Number(form.nightly_price);
