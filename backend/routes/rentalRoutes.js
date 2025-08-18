@@ -226,7 +226,7 @@ router.get('/user', async (req, res) => {
   res.json(data);
 });
 
-// Book or unbook a rental
+// Book or unbook a rental (toggle status)
 router.put('/:id/book', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body; // expects 'booked' or 'available'

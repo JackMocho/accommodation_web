@@ -297,11 +297,12 @@ export default function LandlordDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleRentals.map((r) => (
               <div key={r.id} className="mb-6">
+                {/* Show rental title clearly above the card */}
+                <h4 className="font-bold text-lg mb-2 text-white">{r.title}</h4>
                 <RentalCard
                   rental={r}
                   onDelete={handleDeleteRental}
                   onEdit={setEditingRentalId}
-                  // Show the correct button based on status
                   actionButton={
                     r.status === 'available' ? (
                       <button
