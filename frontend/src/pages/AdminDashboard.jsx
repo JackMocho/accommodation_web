@@ -179,10 +179,8 @@ export default function AdminDashboard() {
     // eslint-disable-next-line
   }, []);
 
-  // Filter rentals to show only available and booked
-  const filteredRentals = rentals.filter(
-    r => r.status === 'available' || r.status === 'booked'
-  );
+  // Show all rentals
+  const filteredRentals = rentals;
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-800 to-purple-900 text-white">
