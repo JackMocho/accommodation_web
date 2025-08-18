@@ -122,11 +122,11 @@ export default function LandlordDashboard() {
     }
   };
 
-  // Book rental handler
+  // Book rental handler: sets status to 'booked'
   const handleBookRental = async (id) => {
     if (!window.confirm('Mark this rental as Booked?')) return;
     try {
-      await axios.put(`/api/rentals/${id}/book`, {}, {
+      await axios.put(`/api/rentals/${id}/book`, { status: 'booked' }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await fetchRentals();
@@ -136,11 +136,11 @@ export default function LandlordDashboard() {
     }
   };
 
-  // Make available handler
+  // Make available handler: sets status to 'available'
   const handleMakeAvailable = async (id) => {
     if (!window.confirm('Mark this rental as available?')) return;
     try {
-      await axios.put(`/api/rentals/${id}/available`, {}, {
+      await axios.put(`/api/rentals/${id}/book`, { status: 'available' }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await fetchRentals();
@@ -301,9 +301,24 @@ export default function LandlordDashboard() {
                   rental={r}
                   onDelete={handleDeleteRental}
                   onEdit={setEditingRentalId}
-                  // Pass book and available handlers as props
-                  onBook={() => handleBookRental(r.id)}
-                  onMakeAvailable={() => handleMakeAvailable(r.id)}
+                  // Show the correct button based on status
+                  actionButton={
+                    r.status === 'available' ? (
+                      <button
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded mt-2"
+                        onClick={() => handleBookRental(r.id)}
+                      >
+                        Mark as Booked
+                      </button>
+                    ) : (
+                      <button
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded mt-2"
+                        onClick={() => handleMakeAvailable(r.id)}
+                      >
+                        Mark as Available
+                      </button>
+                    )
+                  }
                 />
                 {editingRentalId === r.id && (
                   <EditRentalForm

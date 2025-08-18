@@ -1,10 +1,11 @@
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const RentalCard = ({ rental, onDelete, onEdit, onBook, onMakeAvailable }) => {
+const RentalCard = ({ rental, onDelete, onEdit, actionButton }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-gray-800 rounded shadow p-4 flex flex-col relative">
+    <div className="bg-white rounded shadow p-4 flex flex-col relative">
       <Link to={`/rentals/${rental.id}`}>
         {rental.images && rental.images.length > 0 && (
           <img
@@ -32,27 +33,7 @@ const RentalCard = ({ rental, onDelete, onEdit, onBook, onMakeAvailable }) => {
         </div>
       </Link>
       <div className="flex gap-2 mt-2">
-        {onEdit && (
-          <button
-            onClick={() => onEdit(rental.id)}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-          >
-            Edit
-          </button>
-        )}
-        {onDelete && (
-          <button
-            onClick={() => onDelete(rental.id)}
-            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-          >
-            Delete
-          </button>
-        )}
-        {rental.status === 'available' ? (
-          <button onClick={onBook}>Mark as Booked</button>
-        ) : (
-          <button onClick={onMakeAvailable}>Mark as Available</button>
-        )}
+        {actionButton}
       </div>
     </div>
   );
