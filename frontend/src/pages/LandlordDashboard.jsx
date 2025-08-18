@@ -1,13 +1,13 @@
 // filepath: d:\Real property App\frontend\src\pages\LandlordDashboard.jsx
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import useSocket from '../hooks/useSocket';
 import NotificationBell from '../components/NotificationBell';
 import { useAuth } from '../context/AuthContext';
 import EditRentalForm from './EditRentalForm';
 import Chat from '../components/Chat';
 import api from '../utils/api';
-import RentalCard from '../components/RentalCard'; // Use shared component
+import RentalCard from '../components/RentalCard'; // Correct default import
 
 export default function LandlordDashboard() {
   const [rentals, setRentals] = useState([]);
@@ -19,27 +19,18 @@ export default function LandlordDashboard() {
   const [replyText, setReplyText] = useState('');
   const [editSuccess, setEditSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  const location = window.location;
-  const navState = (window.history.state && window.history.state.usr && window.history.state.usr.state) || {};
-  useEffect(() => {
-    // Check for success message from navigation state
-    if (navState.successMsg) {
-      setSuccessMsg(navState.successMsg);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    }
-  }, []);
   const [showAllMessages, setShowAllMessages] = useState(false);
   const [allChats, setAllChats] = useState([]);
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
-  const token = localStorage.getItem('token');
-  const userId = user?.id || localStorage.getItem('userId');
   const { notifications, clearNotifications } = useSocket();
   const { user } = useAuth();
+  const token = localStorage.getItem('token');
+  const userId = user?.id || localStorage.getItem('userId');
   const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
+  const userPhone = user?.phone || localStorage.getItem('userPhone') || '';
   const welcomeMsg = `Welcome, ${userName} (Landlord)`;
+  const adminUserId = '1'; // Replace with actual admin user id if needed
 
   // Fetch rentals
   const fetchRentals = async () => {
@@ -61,18 +52,14 @@ export default function LandlordDashboard() {
     }
   };
 
+  // Fetch all chats for landlord
   const fetchAllChats = async () => {
     try {
-      // Fetch all messages where landlord is receiver for any rental
       const res = await api.get(`/chat/messages/recent/${userId}`);
-      // Group by rental and client
       const chatUsers = [];
       for (const msg of res.data) {
-        // Only show chats where landlord is receiver or sender
         if (msg.receiver_id === Number(userId) || msg.sender_id === Number(userId)) {
-          // Find the other user (client)
           const otherUserId = msg.sender_id === Number(userId) ? msg.receiver_id : msg.sender_id;
-          // Avoid duplicates
           if (!chatUsers.some(u => u.userId === otherUserId && u.rentalId === msg.rental_id)) {
             chatUsers.push({
               userId: otherUserId,
@@ -98,10 +85,10 @@ export default function LandlordDashboard() {
     fetchRentals();
     fetchMessages();
     fetchAllChats();
-    // Optionally, listen for new messages via socket and refresh
     // eslint-disable-next-line
   }, [token]);
 
+  // Delete rental handler
   const handleDeleteRental = async (id) => {
     if (!window.confirm('Are you sure you want to delete this rental?')) return;
     try {
@@ -113,7 +100,7 @@ export default function LandlordDashboard() {
     }
   };
 
-  // Send reply handler
+  // Reply handler
   const handleReply = async (msg) => {
     if (!replyText.trim()) return;
     try {
@@ -158,11 +145,7 @@ export default function LandlordDashboard() {
     }
   };
 
-  // Find admin userId (assuming admin has role 'admin')
-  // You may want to fetch this from the backend if you have multiple admins
-  const adminUserId = '1'; // Replace with actual admin user id if needed
-
-  // Only show available rentals
+  // Only show available and booked rentals
   const visibleRentals = rentals.filter(r => r.status === 'available' || r.status === 'booked');
 
   return (
@@ -239,13 +222,12 @@ export default function LandlordDashboard() {
           ) : (
             <ul className="space-y-3">
               {messages
-                .slice() // make a copy to avoid mutating state
+                .slice()
                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                 .map((msg, idx) => (
                   <li key={idx} className="border-b border-red-700 pb-2">
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-blue-300">
-                        {/* Show sender name and email */}
                         {msg.sender_name || msg.sender_id}
                         {msg.sender_email && (
                           <span className="ml-2 text-yellow-300 text-xs">
@@ -301,8 +283,6 @@ export default function LandlordDashboard() {
         </section>
       )}
 
-      
-
       {/* Rentals Section */}
       <section className="mb-8">
         <h3 className="text-xl font-semibold mb-4">Your Rentals</h3>
@@ -319,7 +299,6 @@ export default function LandlordDashboard() {
                   onBook={handleBookRental}
                   onMakeAvailable={handleMakeAvailable}
                 />
-                {/* Show Edit Form below this rental if editing */}
                 {editingRentalId === r.id && (
                   <EditRentalForm
                     rental={r}
@@ -334,7 +313,6 @@ export default function LandlordDashboard() {
       </section>
 
       {/* View All Messages Section */}
-      {/* View All Messages Button */}
       <div className="flex gap-4 mb-8">
         <button
           className={`px-4 py-2 rounded ${showAllMessages ? 'bg-blue-700 text-white' : 'bg-gray-700 text-gray-200'}`}
@@ -347,7 +325,6 @@ export default function LandlordDashboard() {
         <section className="mb-12">
           <h2 className="text-xl font-semibold mb-4">All User Chats</h2>
           <div className="flex gap-8">
-            {/* User List */}
             <div className="w-1/3 bg-gray-800 rounded shadow p-4 max-h-[60vh] overflow-y-auto">
               <h4 className="font-medium mb-4">Clients</h4>
               {allChats.length === 0 ? (
@@ -362,7 +339,7 @@ export default function LandlordDashboard() {
                         setSelectedChatUser(u);
                         // Fetch messages for this rental and client
                         const res = await api.get(
-                          `http://localhost:5000/api/chat/messages/${u.rentalId}`
+                          `/chat/messages/${u.rentalId}`
                         );
                         setChatMessages(res.data.filter(
                           m => (m.sender_id === u.userId || m.receiver_id === u.userId)
@@ -384,7 +361,6 @@ export default function LandlordDashboard() {
                 </ul>
               )}
             </div>
-            {/* Chat Window */}
             <div className="flex-1 bg-gray-800 rounded shadow p-4 flex flex-col max-h-[60vh]">
               <h4 className="font-medium mb-4">
                 {selectedChatUser ? `Chat with ${selectedChatUser.userName || selectedChatUser.userId}` : 'Select a client'}
@@ -405,7 +381,6 @@ export default function LandlordDashboard() {
                   ))
                 )}
               </div>
-              {/* Reply box */}
               {selectedChatUser && (
                 <div className="flex space-x-2">
                   <input
@@ -429,7 +404,7 @@ export default function LandlordDashboard() {
                       setReplyText('');
                       // Refresh chat
                       const res = await api.get(
-                        `http://localhost:5000/api/chat/messages/${selectedChatUser.rentalId}`
+                        `/chat/messages/${selectedChatUser.rentalId}`
                       );
                       setChatMessages(res.data.filter(
                         m => (m.sender_id === selectedChatUser.userId || m.receiver_id === selectedChatUser.userId)
