@@ -23,6 +23,7 @@ export default function SubmitRental() {
   const [successMsg, setSuccessMsg] = useState(''); // CHANGED
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useAutoLocation(setLat, setLng);
 
@@ -73,6 +74,8 @@ export default function SubmitRental() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    setSuccessMsg('');
     // Ensure lat/lng are numbers
     const latitude = typeof lat === 'number' ? lat : null;
     const longitude = typeof lng === 'number' ? lng : null;
@@ -85,38 +88,23 @@ export default function SubmitRental() {
       mode: form.mode,
       type: form.type,
       status: form.status,
-      images: form.images, // <-- send as array
-      location: { coordinates: [longitude, latitude] },
+      images: form.images,
+      location: form.location, // use picked location from LocationPicker
       landlord_id: userId,
       town: form.town,
       lat: latitude,
       lng: longitude,
     };
-    if (form.mode === 'lodging') {
-      payload.nightly_price = Number(form.nightly_price);
-    } else {
-      payload.price = Number(form.price);
-    }
     try {
       await api.post('/rentals/submit', payload);
-      const successMsg = form.mode === 'lodging'
-        ? 'Your property successfully listed as Lodging/AirBnB!'
-        : 'Your property successfully listed!';
-      setForm({
-        title: '',
-        description: '',
-        price: '',
-        nightly_price: '',
-        type: '',
-        images: [],
-        town: '',
-        location: null,
-        mode: 'rental',
-      });
-      setPreviews([]);
-      navigate('/LandlordDashboard', { state: { successMsg } });
+      setSuccessMsg('Rental submitted successfully!');
+      setTimeout(() => {
+        navigate('/LandlordDashboard', { state: { successMsg: 'Your property was listed successfully!' } });
+      }, 1200);
     } catch (err) {
       alert(err.response?.data?.error || 'Submission failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -130,6 +118,12 @@ export default function SubmitRental() {
       {successMsg && (
         <div className="mb-4 p-3 bg-green-700 text-white rounded">
           {successMsg}
+        </div>
+      )}
+
+      {submitting && (
+        <div className="mb-4 p-3 bg-blue-700 text-white rounded">
+          Submitting the rental, wait!
         </div>
       )}
 

@@ -179,6 +179,11 @@ export default function AdminDashboard() {
     // eslint-disable-next-line
   }, []);
 
+  // Filter rentals to show only available and booked
+  const filteredRentals = rentals.filter(
+    r => r.status === 'available' || r.status === 'booked'
+  );
+
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-800 to-purple-900 text-white">
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
@@ -302,14 +307,18 @@ export default function AdminDashboard() {
             </tr>
           </thead>
           <tbody>
-            {rentals.length === 0 ? (
+            {filteredRentals.length === 0 ? (
               <tr><td colSpan={5}>No rentals found.</td></tr>
             ) : (
-              rentals.map(r => (
+              filteredRentals.map(r => (
                 <tr key={r.id}>
                   <td>{r.title}</td>
                   <td>{r.description}</td>
-                  <td>{r.price}</td>
+                  <td>
+                    {r.mode === 'lodging'
+                      ? `KES ${r.nightly_price}/night`
+                      : `KES ${r.price}/month`}
+                  </td>
                   <td>{r.status}</td>
                   <td>
                     <button onClick={() => handleDeleteRental(r.id)} className="bg-red-600 px-2 py-1 rounded">Delete</button>

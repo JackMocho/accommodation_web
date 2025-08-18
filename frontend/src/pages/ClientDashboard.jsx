@@ -90,9 +90,15 @@ export default function ClientDashboard() {
             {visibleRentals.map(rental => (
               <div key={rental.id} className="mb-6">
                 <RentalCard rental={rental} />
-                <div className="mt-2">
-                  <MapComponent rentals={[rental]} height="h-48" />
-                </div>
+                {/* Show location details if available */}
+                {rental.location && Array.isArray(rental.location.coordinates) && (
+                  <div className="mt-2">
+                    <MapComponent rentals={[rental]} height="h-48" />
+                    <div className="text-sm text-gray-200 mt-1">
+                      Location: Lat {rental.location.coordinates[1]}, Lng {rental.location.coordinates[0]}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
