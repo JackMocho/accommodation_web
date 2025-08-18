@@ -253,4 +253,20 @@ router.put('/:id/book', async (req, res) => {
   }
 });
 
+// Get a single rental by ID
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) return res.status(404).json({ error: 'Rental not found' });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

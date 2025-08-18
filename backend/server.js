@@ -7,7 +7,6 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   'https://accommodation-web-pyz9.onrender.com',
-  'https://accommodation-web.onrender.com',
   'http://localhost:5173'
 ];
 
