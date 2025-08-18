@@ -80,7 +80,7 @@ export default function SubmitRental() {
       mode: form.mode,
       type: form.type,
       status: form.status,
-      images: JSON.stringify(form.images), // <-- submit as JSON string
+      images: form.images, // <-- send as array
       location: { coordinates: [lng, lat] },
       landlord_id: userId,
       town: form.town,

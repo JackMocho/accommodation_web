@@ -50,7 +50,7 @@ router.post('/submit', async (req, res) => {
           mode,
           type,
           status: status || 'available',
-          images: Array.isArray(images) ? JSON.stringify(images) : images,
+          images: JSON.stringify(images),
           location: finalLocation,
           town,
           landlord_id: finalLandlordId,
