@@ -109,15 +109,9 @@ router.put('/approve-user/:id', protect, isAdmin, async (req, res) => {
 
 // 2. Rental Management
 router.get('/rentals', async (req, res) => {
-  // You may need to adjust this query for your schema
-  const { data, error } = await supabase
-    .from('rentals')
-    .select('*, landlord:landlord_id(*)')
-    .order('created_at', { ascending: false });
-  if (error) return res.status(500).json({ error: 'Failed to fetch rentals.' });
-  // Filter rentals where landlord.status === 'approved'
-  const filtered = data.filter(r => r.landlord && r.landlord.status === 'approved');
-  res.json(filtered);
+  const { data, error } = await supabase.from('rentals').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 router.put('/rental/:id/approve', async (req, res) => {
