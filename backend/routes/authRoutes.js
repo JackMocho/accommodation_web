@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../utils/supabaseClient');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 
 // Register User (using Supabase Auth)
 router.post('/register', async (req, res) => {
