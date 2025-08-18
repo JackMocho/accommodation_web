@@ -8,6 +8,7 @@ import EditRentalForm from './EditRentalForm';
 import Chat from '../components/Chat';
 import api from '../utils/api';
 import RentalCard from '../components/RentalCard';
+import axios from 'axios';
 
 export default function LandlordDashboard() {
   const [rentals, setRentals] = useState([]);
@@ -121,15 +122,12 @@ export default function LandlordDashboard() {
     }
   };
 
-  // Book/unbook rental handler (uses status)
+  // Book rental handler
   const handleBookRental = async (id) => {
     if (!window.confirm('Mark this rental as Booked?')) return;
     try {
-      await fetch(`/api/rentals/${id}/book`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'booked' }),
-        credentials: 'include'
+      await axios.put(`/api/rentals/${id}/book`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       await fetchRentals();
       alert('Rental marked as Booked!');
@@ -138,14 +136,12 @@ export default function LandlordDashboard() {
     }
   };
 
+  // Make available handler
   const handleMakeAvailable = async (id) => {
     if (!window.confirm('Mark this rental as available?')) return;
     try {
-      await fetch(`/api/rentals/${id}/book`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'available' }),
-        credentials: 'include'
+      await axios.put(`/api/rentals/${id}/available`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       await fetchRentals();
       alert('Rental marked as available!');
