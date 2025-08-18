@@ -38,7 +38,7 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
           )}
           <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">{rental.type}</span>
           <span className="bg-yellow-700 text-white px-2 py-1 rounded text-xs">
-            {rental.status === 'booked' ? 'Booked' : (rental.status || 'available')}
+            {rental.status === 'booked' ? 'Booked' : 'Available'}
           </span>
         </div>
       </div>
