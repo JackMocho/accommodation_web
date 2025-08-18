@@ -74,7 +74,11 @@ export default function AdminDashboard() {
   // Approve user
   const handleApproveUser = async (id) => {
     try {
-      await api.put(`/admin/approve-user/${id}`, {}, authHeaders);
+      await api.put(
+        `/admin/approve-user/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setSuccess('User approved');
       fetchPendingUsers();
       fetchUsers();
