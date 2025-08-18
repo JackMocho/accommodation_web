@@ -66,7 +66,7 @@ router.get('/messages/:rental_id', async (req, res) => {
 
 // Fetch recent messages for a user (inbox)
 router.get('/messages/recent/:userId', async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.params.userId;
   if (!userId) {
     return res.status(400).json({ error: 'User id required' });
   }
@@ -76,7 +76,13 @@ router.get('/messages/recent/:userId', async (req, res) => {
       .select('*')
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('created_at', { ascending: false });
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    if (!data) {
+      return res.status(404).json({ error: 'No messages found' });
+    }
     res.json(data);
   } catch (err) {
     console.error('Chat fetch error:', err);

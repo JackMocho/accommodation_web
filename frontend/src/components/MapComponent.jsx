@@ -2,9 +2,18 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, LayersControl, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
 const { BaseLayer } = LayersControl;
 const DEFAULT_CENTER = [-1.2833, 36.8167]; // Nairobi fallback
+
+// Fix Leaflet's default icon paths to use CDN
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 export default function MapComponent({ rentals, userLocation, rentalLocation, height = "h-64 md:h-96" }) {
   const [zoom, setZoom] = useState(15);
