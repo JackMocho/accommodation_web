@@ -233,13 +233,24 @@ router.put('/:id/book', async (req, res) => {
   if (!['booked', 'available'].includes(status)) {
     return res.status(400).json({ error: 'Invalid status' });
   }
-  const { data, error } = await supabase
-    .from('rentals')
-    .update({ status })
-    .eq('id', id)
-    .select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
+  try {
+    const { data, error } = await supabase
+      .from('rentals')
+      .update({ status })
+      .eq('id', id)
+      .select();
+    if (error) {
+      console.error('Supabase error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: 'Rental not found' });
+    }
+    res.json(data[0]);
+  } catch (err) {
+    console.error('Server error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 module.exports = router;
