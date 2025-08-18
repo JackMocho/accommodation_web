@@ -7,9 +7,78 @@ import { useAuth } from '../context/AuthContext';
 import EditRentalForm from './EditRentalForm';
 import Chat from '../components/Chat';
 import api from '../utils/api';
-import RentalCard from '../components/RentalCard';
 import axios from 'axios';
 import MapComponent from '../components/MapComponent';
+
+// Integrated RentalCard with map and status toggle
+function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="bg-gray-800 rounded shadow p-4 flex flex-col relative">
+      <div onClick={() => navigate(`/rentals/${rental.id}`)} className="cursor-pointer">
+        {rental.images && rental.images.length > 0 && (
+          <img
+            src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
+            alt={rental.title}
+            className="w-full h-40 object-cover rounded mb-2"
+          />
+        )}
+        <h4 className="font-bold text-lg mb-1">{rental.title}</h4>
+        <p className="text-gray-400 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {rental.mode === 'lodging' ? (
+            <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
+              KES {rental.nightly_price}/night
+            </span>
+          ) : (
+            <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
+              KES {rental.price}/month
+            </span>
+          )}
+          <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">{rental.type}</span>
+          <span className="bg-yellow-700 text-white px-2 py-1 rounded text-xs">
+            {rental.status === 'booked' ? 'Booked' : (rental.status || 'available')}
+          </span>
+        </div>
+      </div>
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={() => onEdit(rental.id)}
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onDelete(rental.id)}
+          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+        >
+          Delete
+        </button>
+        {rental.status !== 'booked' ? (
+          <button
+            onClick={() => onBook(rental.id)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+          >
+            Mark as Booked
+          </button>
+        ) : (
+          <button
+            onClick={() => onMakeAvailable(rental.id)}
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+          >
+            Mark as Available
+          </button>
+        )}
+      </div>
+      {rental.location && Array.isArray(rental.location.coordinates) && (
+        <div className="mt-2">
+          <MapComponent rentals={[rental]} height="h-40" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LandlordDashboard() {
   const [rentals, setRentals] = useState([]);
@@ -300,36 +369,13 @@ export default function LandlordDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleRentals.map((r) => (
               <div key={r.id} className="mb-6">
-                <h4 className="font-bold text-lg mb-2 text-white">{r.title}</h4>
-                {/* Make the card clickable to go to RentalDetail */}
-                <div
-                  className="cursor-pointer"
-                  onClick={() => navigate(`/rentals/${r.id}`)}
-                  title="Click to view details and map"
-                >
-                  <RentalCard
-                    rental={r}
-                    onDelete={handleDeleteRental}
-                    onEdit={setEditingRentalId}
-                    actionButton={
-                      r.status === 'available' ? (
-                        <button
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded mt-2"
-                          onClick={e => { e.stopPropagation(); handleBookRental(r.id); }}
-                        >
-                          Mark as Booked
-                        </button>
-                      ) : (
-                        <button
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded mt-2"
-                          onClick={e => { e.stopPropagation(); handleMakeAvailable(r.id); }}
-                        >
-                          Mark as Available
-                        </button>
-                      )
-                    }
-                  />
-                </div>
+                <RentalCard
+                  rental={r}
+                  onDelete={handleDeleteRental}
+                  onEdit={setEditingRentalId}
+                  onBook={handleBookRental}
+                  onMakeAvailable={handleMakeAvailable}
+                />
                 {editingRentalId === r.id && (
                   <EditRentalForm
                     rental={r}
