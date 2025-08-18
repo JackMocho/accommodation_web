@@ -48,15 +48,14 @@ const RentalCard = ({ rental, onDelete, onEdit, onBook, onMakeAvailable }) => {
             Delete
           </button>
         )}
-        {onBook && rental.status !== 'booked' && (
+        {rental.status === 'available' ? (
           <button
             onClick={() => onBook(rental.id)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+            className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded"
           >
             Mark as Booked
           </button>
-        )}
-        {onMakeAvailable && rental.status === 'booked' && (
+        ) : (
           <button
             onClick={() => onMakeAvailable(rental.id)}
             className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"

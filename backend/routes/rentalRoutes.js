@@ -226,4 +226,20 @@ router.get('/user', async (req, res) => {
   res.json(data);
 });
 
+// Book or unbook a rental
+router.put('/:id/book', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body; // expects 'booked' or 'available'
+  if (!['booked', 'available'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  const { data, error } = await supabase
+    .from('rentals')
+    .update({ status })
+    .eq('id', id)
+    .select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data[0]);
+});
+
 module.exports = router;

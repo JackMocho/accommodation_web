@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import EditRentalForm from './EditRentalForm';
 import Chat from '../components/Chat';
 import api from '../utils/api';
-import RentalCard from '../components/RentalCard'; // Correct default import
+import RentalCard from '../components/RentalCard';
 
 export default function LandlordDashboard() {
   const [rentals, setRentals] = useState([]);
@@ -30,7 +30,7 @@ export default function LandlordDashboard() {
   const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
   const userPhone = user?.phone || localStorage.getItem('userPhone') || '';
   const welcomeMsg = `Welcome, ${userName} (Landlord)`;
-  const adminUserId = '1'; // Replace with actual admin user id if needed
+  const adminUserId = '1';
 
   // Fetch rentals
   const fetchRentals = async () => {
@@ -121,11 +121,16 @@ export default function LandlordDashboard() {
     }
   };
 
-  // Book rental handler
+  // Book/unbook rental handler (uses status)
   const handleBookRental = async (id) => {
     if (!window.confirm('Mark this rental as Booked?')) return;
     try {
-      await api.put(`/rentals/${id}/book`);
+      await fetch(`/api/rentals/${id}/book`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'booked' }),
+        credentials: 'include'
+      });
       await fetchRentals();
       alert('Rental marked as Booked!');
     } catch (err) {
@@ -133,11 +138,15 @@ export default function LandlordDashboard() {
     }
   };
 
-  // Make available handler
   const handleMakeAvailable = async (id) => {
     if (!window.confirm('Mark this rental as available?')) return;
     try {
-      await api.put(`/rentals/${id}/available`);
+      await fetch(`/api/rentals/${id}/book`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'available' }),
+        credentials: 'include'
+      });
       await fetchRentals();
       alert('Rental marked as available!');
     } catch (err) {
@@ -296,8 +305,9 @@ export default function LandlordDashboard() {
                   rental={r}
                   onDelete={handleDeleteRental}
                   onEdit={setEditingRentalId}
-                  onBook={handleBookRental}
-                  onMakeAvailable={handleMakeAvailable}
+                  // Pass book and available handlers as props
+                  onBook={() => handleBookRental(r.id)}
+                  onMakeAvailable={() => handleMakeAvailable(r.id)}
                 />
                 {editingRentalId === r.id && (
                   <EditRentalForm
