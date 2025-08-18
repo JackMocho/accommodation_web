@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import MapComponent from '../components/MapComponent';
 
 export default function AdminDashboard() {
   const { user, token: contextToken } = useAuth();
@@ -17,6 +18,7 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [chatInput, setChatInput] = useState('');
   const [chatError, setChatError] = useState('');
+  const [selectedRental, setSelectedRental] = useState(null);
 
   // Helper for auth headers
   const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
@@ -301,16 +303,23 @@ export default function AdminDashboard() {
         <table className="w-full table-auto bg-gray-800 rounded">
           <thead>
             <tr>
-              <th>Title</th><th>Description</th><th>Price</th><th>Status</th><th>Action</th>
+              <th>Title</th><th>Description</th><th>Price</th><th>Status</th><th>Map</th><th>Action</th>
             </tr>
           </thead>
           <tbody>
             {filteredRentals.length === 0 ? (
-              <tr><td colSpan={5}>No rentals found.</td></tr>
+              <tr><td colSpan={6}>No rentals found.</td></tr>
             ) : (
               filteredRentals.map(r => (
                 <tr key={r.id}>
-                  <td>{r.title}</td>
+                  <td>
+                    <button
+                      className="underline text-blue-300"
+                      onClick={() => setSelectedRental(r)}
+                    >
+                      {r.title}
+                    </button>
+                  </td>
                   <td>{r.description}</td>
                   <td>
                     {r.mode === 'lodging'
@@ -318,6 +327,11 @@ export default function AdminDashboard() {
                       : `KES ${r.price}/month`}
                   </td>
                   <td>{r.status}</td>
+                  <td>
+                    {r.location && Array.isArray(r.location.coordinates) && (
+                      <MapComponent rentals={[r]} height="h-32" />
+                    )}
+                  </td>
                   <td>
                     <button onClick={() => handleDeleteRental(r.id)} className="bg-red-600 px-2 py-1 rounded">Delete</button>
                   </td>
@@ -327,6 +341,31 @@ export default function AdminDashboard() {
           </tbody>
         </table>
       </section>
+
+      {/* Rental detail modal with map */}
+      {selectedRental && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative text-black">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
+              onClick={() => setSelectedRental(null)}
+            >
+              &times;
+            </button>
+            <h2 className="text-2xl font-bold mb-2">{selectedRental.title}</h2>
+            <p className="mb-2">{selectedRental.description}</p>
+            <div className="mb-4">
+              <strong>Status:</strong> {selectedRental.status}
+            </div>
+            <div className="mb-4">
+              <MapComponent
+                rentals={[selectedRental]}
+                height="h-64"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Chat Section */}
       {selectedUser && (
@@ -345,7 +384,7 @@ export default function AdminDashboard() {
                   <span className="text-xs text-gray-400 ml-2">{new Date(msg.created_at).toLocaleString()}</span>
                 </div>
               ))
-      )}
+            )}
           </div>
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <input
