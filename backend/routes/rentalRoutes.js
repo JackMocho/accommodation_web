@@ -9,17 +9,33 @@ router.post('/submit', async (req, res) => {
       title,
       description,
       price,
+      nightly_price,
       mode,
       type,
       status,
       images,
-      location,
+      lat,
+      lng,
+      town,
+      user_id,
       landlord_id,
+      location,
     } = req.body;
 
+    // Accept either price or nightly_price
+    const finalPrice = price || nightly_price;
+    // Accept either user_id or landlord_id
+    const finalLandlordId = landlord_id || user_id;
+
     // Validate required fields
-    if (!title || !price || !mode || !type || !landlord_id) {
+    if (!title || !finalPrice || !mode || !type || !finalLandlordId) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Build location object if lat/lng provided
+    let finalLocation = location;
+    if (!finalLocation && lat && lng) {
+      finalLocation = { coordinates: [lng, lat] };
     }
 
     // Insert into DB
@@ -29,13 +45,18 @@ router.post('/submit', async (req, res) => {
         {
           title,
           description,
-          price,
+          price: price || null,
+          nightly_price: nightly_price || null,
           mode,
           type,
           status: status || 'available',
           images: Array.isArray(images) ? JSON.stringify(images) : images,
-          location,
-          landlord_id,
+          location: finalLocation,
+          town,
+          landlord_id: finalLandlordId,
+          user_id: finalLandlordId, // for compatibility
+          latitude: lat || null,
+          longitude: lng || null,
         }
       ])
       .select();
