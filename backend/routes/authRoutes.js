@@ -2,39 +2,34 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../utils/supabaseClient');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 // Register User (using Supabase Auth)
 router.post('/register', async (req, res) => {
-  const { email, password, full_name, phone, role = 'client', town, latitude, longitude } = req.body;
-  if (!email || !password || !full_name) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  const { email, password, full_name, phone, role, town, latitude, longitude } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
   }
   try {
-    // Create user in Supabase Auth
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-    if (authError) throw authError;
+    // Store password as plain text (NOT recommended for production)
+    // const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert profile in users table
-    const { error: userError } = await supabase.from('users').insert([{
-      id: authUser.user.id,
-      full_name,
-      phone,
-      role,
-      town,
-      latitude,
-      longitude,
-      approved: false,
-      suspended: false,
-      superuser: false, // <-- add this line!
-      password, // store as plain text (not recommended for production)
-    }]);
-    if (userError) throw userError;
-
-    res.json({ message: 'Registration successful. Awaiting approval.' });
+    const { data, error } = await supabase
+      .from('users')
+      .insert([
+        {
+          email,
+          password, // store as plain text
+          full_name,
+          phone,
+          role,
+          town,
+          latitude,
+          longitude,
+        }
+      ]);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true, user: data[0] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || 'Server error' });
@@ -62,8 +57,9 @@ router.post('/login', async (req, res) => {
     }
     const user = users[0];
 
-    // Check password (plain text, as per your system)
-    if (user.password !== password) {
+    // Check password (hashed)
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
