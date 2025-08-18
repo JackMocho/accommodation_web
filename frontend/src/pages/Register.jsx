@@ -47,8 +47,8 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/auth/register', {
-        email: form.email,
+      const payload = {
+        email: form.email ? form.email : undefined, // Only send if not empty
         password: form.password,
         full_name: form.full_name,
         phone: form.phone,
@@ -56,7 +56,8 @@ export default function Register() {
         town: form.town,
         latitude: form.latitude,
         longitude: form.longitude,
-      });
+      };
+      await api.post('/auth/register', payload);
       alert('Registration successful! Awaiting approval.');
       navigate('/'); // Redirect to HomePage.jsx
     } catch (err) {
