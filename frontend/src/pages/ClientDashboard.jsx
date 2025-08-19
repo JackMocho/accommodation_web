@@ -17,6 +17,7 @@ export default function ClientDashboard() {
   const { notifications, clearNotifications } = useSocket();
   const { user } = useAuth();
   const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
+  const [activeCount, setActiveCount] = useState(0);
 
   useEffect(() => {
     if (!token) {
@@ -36,8 +37,10 @@ export default function ClientDashboard() {
           filtered = filtered.filter(r => r.mode === propertyType);
         }
         setAvailableRentals(filtered);
+        setActiveCount(filtered.length); // Set active rentals count
       } catch (err) {
         setAvailableRentals([]);
+        setActiveCount(0);
       }
       setLoading(false);
     };
@@ -57,6 +60,9 @@ export default function ClientDashboard() {
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Welcome, {userName} (Client)</h2>
+        <div className="bg-blue-700 text-white px-4 py-2 rounded font-semibold shadow ml-4">
+          Active Rentals: {activeCount}
+        </div>
       </div>
 
       <section className="mb-8">
