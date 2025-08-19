@@ -30,7 +30,7 @@ export default function ClientDashboard() {
       setLoading(true);
       try {
         // Fetch all rentals with status=available from the backend
-        const res = await api.get('/rentals?status=available');
+        const res = await api.get('/api/rentals');
         // Optionally filter by propertyType if needed
         let filtered = res.data;
         if (propertyType !== 'all') {
