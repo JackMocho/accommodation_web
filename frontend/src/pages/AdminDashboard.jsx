@@ -184,6 +184,22 @@ export default function AdminDashboard() {
   // Show all rentals
   const filteredRentals = rentals;
 
+  // Swap coordinates for Leaflet: [lat, lng]
+  const rentalsWithLatLng = rentals.map(r =>
+    r.location && Array.isArray(r.location.coordinates)
+      ? {
+          ...r,
+          location: {
+            ...r.location,
+            coordinates: [
+              r.location.coordinates[1], // lat
+              r.location.coordinates[0], // lng
+            ],
+          },
+        }
+      : r
+  );
+
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-800 to-purple-900 text-white">
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
@@ -329,7 +345,23 @@ export default function AdminDashboard() {
                   <td>{r.status}</td>
                   <td>
                     {r.location && Array.isArray(r.location.coordinates) && (
-                      <MapComponent rentals={[r]} height="h-32" />
+                      <MapComponent
+                        rentals={[
+                          r.location && Array.isArray(r.location.coordinates)
+                            ? {
+                                ...r,
+                                location: {
+                                  ...r.location,
+                                  coordinates: [
+                                    r.location.coordinates[1], // lat
+                                    r.location.coordinates[0], // lng
+                                  ],
+                                },
+                              }
+                            : r
+                        ]}
+                        height="h-32"
+                      />
                     )}
                   </td>
                   <td>
@@ -360,7 +392,7 @@ export default function AdminDashboard() {
             <div className="mb-4">
               <MapComponent
                 rentals={[selectedRental]}
-                height="h-64"
+                height="h-64 md:h-96"
               />
             </div>
           </div>

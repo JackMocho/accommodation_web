@@ -75,7 +75,20 @@ export default function ClientDashboard() {
           <div className="mb-8">
             <h4 className="text-lg font-semibold mb-2 text-center">All Rental & Lodging Locations</h4>
             <MapComponent
-              rentals={rentalsWithLocation}
+              rentals={rentalsWithLocation.map(r =>
+                r.location && Array.isArray(r.location.coordinates)
+                  ? {
+                      ...r,
+                      location: {
+                        ...r.location,
+                        coordinates: [
+                          r.location.coordinates[1], // lat
+                          r.location.coordinates[0], // lng
+                        ],
+                      },
+                    }
+                  : r
+              )}
               height="h-64 md:h-96"
             />
           </div>
