@@ -18,6 +18,21 @@ export default function ClientDashboard() {
   const { user } = useAuth();
   const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
   const [activeCount, setActiveCount] = useState(0);
+  const [stats, setStats] = useState({});
+
+  // Fetch stats (like AdminDashboard)
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/stats');
+      setStats(res.data);
+    } catch (err) {
+      setStats({});
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -59,13 +74,10 @@ export default function ClientDashboard() {
     }
   }, [token, propertyType, user]);
 
-  // Show all rentals (both rental and lodging) with valid location on the map
+  // Rentals with valid location for map
   const rentalsWithLocation = availableRentals.filter(
     r => r.location && Array.isArray(r.location.coordinates)
   );
-
-  // Only show available rentals
-  const visibleRentals = availableRentals;
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900">
@@ -75,6 +87,14 @@ export default function ClientDashboard() {
           Active Rentals: {activeCount}
         </div>
       </div>
+
+      {/* Stats Section */}
+      <section className="mb-8">
+        <h3 className="text-xl font-semibold mb-4">System Stats</h3>
+        <div className="flex gap-8">
+          <div>Active Rentals: {stats.activeRentals || 0}</div>
+        </div>
+      </section>
 
       <section className="mb-8">
         <h3 className="text-xl font-semibold mb-4">Available Rentals & Lodgings</h3>
@@ -123,7 +143,7 @@ export default function ClientDashboard() {
           <p className="text-gray-500">No available rentals or lodgings found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleRentals.map(rental => (
+            {availableRentals.map(rental => (
               <div key={rental.id} className="mb-6">
                 <RentalCard rental={rental} />
                 {rental.location && Array.isArray(rental.location.coordinates) && (
