@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import MapComponent from './MapComponent';
 
 const RentalCard = ({ rental, onDelete, onEdit, actionButton }) => {
   const navigate = useNavigate();
@@ -32,6 +33,11 @@ const RentalCard = ({ rental, onDelete, onEdit, actionButton }) => {
           </span>
         </div>
       </Link>
+      {rental.location && Array.isArray(rental.location.coordinates) && (
+        <div className="mt-2">
+          <MapComponent rentals={[rental]} height="h-40" />
+        </div>
+      )}
       <div className="flex gap-2 mt-2">
         {actionButton}
       </div>
