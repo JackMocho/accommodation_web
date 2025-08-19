@@ -26,27 +26,34 @@ export default function ClientDashboard() {
       return;
     }
 
-    const fetchAvailableRentals = async () => {
-      setLoading(true);
-      try {
-        // Fetch all rentals with status=available from the backend
-        const res = await api.get('/api/rentals');
-        // Optionally filter by propertyType if needed
-        let filtered = res.data;
-        if (propertyType !== 'all') {
-          filtered = filtered.filter(r => r.mode === propertyType);
+    // Only fetch rentals if user is a client and approved
+    if (user && user.role === 'client' && user.approved) {
+      const fetchAvailableRentals = async () => {
+        setLoading(true);
+        try {
+          // Fetch all rentals with status=available from the backend
+          const res = await api.get('/api/rentals');
+          // Optionally filter by propertyType if needed
+          let filtered = res.data;
+          if (propertyType !== 'all') {
+            filtered = filtered.filter(r => r.mode === propertyType);
+          }
+          setAvailableRentals(filtered);
+          setActiveCount(filtered.length); // Set active rentals count
+        } catch (err) {
+          setAvailableRentals([]);
+          setActiveCount(0);
         }
-        setAvailableRentals(filtered);
-        setActiveCount(filtered.length); // Set active rentals count
-      } catch (err) {
-        setAvailableRentals([]);
-        setActiveCount(0);
-      }
-      setLoading(false);
-    };
+        setLoading(false);
+      };
 
-    fetchAvailableRentals();
-  }, [token, propertyType]);
+      fetchAvailableRentals();
+    } else if (user && user.role === 'client' && !user.approved) {
+      setAvailableRentals([]);
+      setActiveCount(0);
+      setLoading(false);
+    }
+  }, [token, propertyType, user]);
 
   // Show all rentals (both rental and lodging) with valid location on the map
   const rentalsWithLocation = availableRentals.filter(
@@ -106,6 +113,8 @@ export default function ClientDashboard() {
 
         {loading ? (
           <p className="text-gray-400">Loading...</p>
+        ) : user && user.role === 'client' && !user.approved ? (
+          <p className="text-yellow-400">Your account is pending approval. Please wait for admin approval to view available rentals.</p>
         ) : availableRentals.length === 0 ? (
           <p className="text-gray-500">No available rentals or lodgings found.</p>
         ) : (
