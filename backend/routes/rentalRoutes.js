@@ -231,7 +231,7 @@ router.get('/user', async (req, res) => {
 // Book or unbook a rental (toggle status)
 router.put('/:id/book', async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body; // expects 'booked' or 'available'
+  const { status } = req.body;
   if (!['booked', 'available'].includes(status)) {
     return res.status(400).json({ error: 'Invalid status' });
   }
@@ -241,16 +241,10 @@ router.put('/:id/book', async (req, res) => {
       .update({ status })
       .eq('id', id)
       .select();
-    if (error) {
-      console.error('Supabase error:', error);
-      return res.status(500).json({ error: error.message });
-    }
-    if (!data || data.length === 0) {
-      return res.status(404).json({ error: 'Rental not found' });
-    }
+    if (error) return res.status(500).json({ error: error.message });
+    if (!data || data.length === 0) return res.status(404).json({ error: 'Rental not found' });
     res.json(data[0]);
   } catch (err) {
-    console.error('Server error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

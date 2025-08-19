@@ -38,7 +38,7 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
           )}
           <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">{rental.type}</span>
           <span className="bg-yellow-700 text-white px-2 py-1 rounded text-xs">
-            {rental.status === 'booked' ? 'Booked' : 'Available'}
+            {rental.status && rental.status.trim().toLowerCase() === 'booked' ? 'Booked' : 'Available'}
           </span>
         </div>
       </div>
@@ -198,9 +198,7 @@ export default function LandlordDashboard() {
   const handleBookRental = async (id) => {
     if (!window.confirm('Mark this rental as Booked?')) return;
     try {
-      await axios.put(`/api/rentals/${id}/book`, { status: 'booked' }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/rentals/${id}/book`, { status: 'booked' });
       await fetchRentals();
       alert('Rental marked as Booked!');
     } catch (err) {
@@ -212,9 +210,7 @@ export default function LandlordDashboard() {
   const handleMakeAvailable = async (id) => {
     if (!window.confirm('Mark this rental as available?')) return;
     try {
-      await axios.put(`/api/rentals/${id}/book`, { status: 'available' }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/rentals/${id}/book`, { status: 'available' });
       await fetchRentals();
       alert('Rental marked as available!');
     } catch (err) {
