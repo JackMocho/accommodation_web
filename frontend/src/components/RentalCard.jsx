@@ -5,6 +5,20 @@ import MapComponent from './MapComponent';
 const RentalCard = ({ rental, onDelete, onEdit, actionButton }) => {
   const navigate = useNavigate();
 
+  // Swap coordinates for Leaflet: [lat, lng]
+  const rentalWithLatLng = rental.location && Array.isArray(rental.location.coordinates)
+    ? {
+        ...rental,
+        location: {
+          ...rental.location,
+          coordinates: [
+            rental.location.coordinates[1], // lat
+            rental.location.coordinates[0], // lng
+          ],
+        },
+      }
+    : rental;
+
   return (
     <div className="bg-white rounded shadow p-4 flex flex-col relative">
       <Link to={`/rentals/${rental.id}`}>
@@ -35,7 +49,7 @@ const RentalCard = ({ rental, onDelete, onEdit, actionButton }) => {
       </Link>
       {rental.location && Array.isArray(rental.location.coordinates) && (
         <div className="mt-2">
-          <MapComponent rentals={[rental]} height="h-40" />
+          <MapComponent rentals={[rentalWithLatLng]} height="h-40" />
         </div>
       )}
       <div className="flex gap-2 mt-2">
