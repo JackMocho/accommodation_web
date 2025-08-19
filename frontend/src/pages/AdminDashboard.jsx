@@ -181,6 +181,20 @@ export default function AdminDashboard() {
     // eslint-disable-next-line
   }, []);
 
+  // Swap coordinates for all rentals for Leaflet ([lat, lng])
+  const rentalsWithLatLng = rentals
+    .filter(r => r.location && Array.isArray(r.location.coordinates))
+    .map(r => ({
+      ...r,
+      location: {
+        ...r.location,
+        coordinates: [
+          r.location.coordinates[1], // lat
+          r.location.coordinates[0], // lng
+        ],
+      },
+    }));
+
   // Show all rentals
   const filteredRentals = rentals;
 
@@ -189,6 +203,12 @@ export default function AdminDashboard() {
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
       {error && <div className="bg-red-700 text-white p-2 rounded mb-4">{error}</div>}
       {success && <div className="bg-green-700 text-white p-2 rounded mb-4">{success}</div>}
+
+      {/* Map with all rentals */}
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">All Rentals Map</h2>
+        <MapComponent rentals={rentalsWithLatLng} height="h-96" />
+      </section>
 
       {/* Stats */}
       <section className="mb-8">
@@ -381,6 +401,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      
       )}
 
       {/* Chat Section */}
