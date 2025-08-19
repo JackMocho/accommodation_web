@@ -116,19 +116,10 @@ router.get('/', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('rentals')
-      .select('*, users!inner(full_name, role, approved)')
-      .eq('status', 'available')
-      .eq('users.role', 'landlord')
-      .eq('users.approved', true)
-      .in('mode', ['rental', 'lodging', 'airbnb'])
-      .order('created_at', { ascending: false });
+      .select('*')
+      .eq('status', 'available');
     if (error) throw error;
-    // Add landlord_name for compatibility
-    const rentals = data.map(r => ({
-      ...r,
-      landlord_name: r.users?.full_name || null
-    }));
-    res.json(rentals);
+    res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch rentals' });
   }
