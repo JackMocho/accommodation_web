@@ -27,12 +27,12 @@ export default function HomePage() {
     const fetchRentals = async () => {
       try {
         const res = await api.get('/rentals');
-        // Show rentals with status 'available' or 'booked'
+        // Only show rentals with status 'available'
         const filteredRentals = res.data.filter(
-          r => r.status === 'available' || r.status === 'booked'
+          r => r.status === 'available'
         );
         setRentals(filteredRentals);
-        setRandomRentals(filteredRentals.slice(0, 6)); // or any logic you want
+        setRandomRentals(filteredRentals.slice(0, 6));
       } catch (err) {
         // handle error
       }

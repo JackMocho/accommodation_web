@@ -26,29 +26,33 @@ export default function ClientDashboard() {
       return;
     }
 
-    // Only fetch rentals if user is a client and approved
-    if (user && user.role === 'client' && user.approved) {
-      const fetchAvailableRentals = async () => {
-        setLoading(true);
-        try {
-          // Fetch all rentals with status=available from the backend
-          const res = await api.get('/api/rentals');
-          // Optionally filter by propertyType if needed
-          let filtered = res.data;
-          if (propertyType !== 'all') {
-            filtered = filtered.filter(r => r.mode === propertyType);
+    // Only fetch rentals if user is a client
+    if (user && user.role === 'client') {
+      if (user.approved) {
+        const fetchAvailableRentals = async () => {
+          setLoading(true);
+          try {
+            // Fetch all rentals with status=available from the backend
+            const res = await api.get('/api/rentals');
+            let filtered = res.data;
+            if (propertyType !== 'all') {
+              filtered = filtered.filter(r => r.mode === propertyType);
+            }
+            setAvailableRentals(filtered);
+            setActiveCount(filtered.length);
+          } catch (err) {
+            setAvailableRentals([]);
+            setActiveCount(0);
           }
-          setAvailableRentals(filtered);
-          setActiveCount(filtered.length); // Set active rentals count
-        } catch (err) {
-          setAvailableRentals([]);
-          setActiveCount(0);
-        }
+          setLoading(false);
+        };
+        fetchAvailableRentals();
+      } else {
+        setAvailableRentals([]);
+        setActiveCount(0);
         setLoading(false);
-      };
-
-      fetchAvailableRentals();
-    } else if (user && user.role === 'client' && !user.approved) {
+      }
+    } else {
       setAvailableRentals([]);
       setActiveCount(0);
       setLoading(false);
