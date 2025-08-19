@@ -7,7 +7,7 @@ import MapComponent from '../components/MapComponent';
 import Chat from '../components/Chat';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import RentalCard from '../components/RentalCard'; // <-- Use shared RentalCard
+import RentalCard from '../components/RentalCard';
 
 export default function ClientDashboard() {
   const [availableRentals, setAvailableRentals] = useState([]);
@@ -28,9 +28,13 @@ export default function ClientDashboard() {
     const fetchAvailableRentals = async () => {
       setLoading(true);
       try {
-        const res = await api.get('/rentals');
-        // Only show rentals with status 'available'
-        const filtered = res.data.filter(r => r.status === 'available');
+        // Fetch all rentals with status=available from the backend
+        const res = await api.get('/rentals?status=available');
+        // Optionally filter by propertyType if needed
+        let filtered = res.data;
+        if (propertyType !== 'all') {
+          filtered = filtered.filter(r => r.mode === propertyType);
+        }
         setAvailableRentals(filtered);
       } catch (err) {
         setAvailableRentals([]);
@@ -47,7 +51,7 @@ export default function ClientDashboard() {
   );
 
   // Only show available rentals
-  const visibleRentals = availableRentals.filter(r => r.status === 'available');
+  const visibleRentals = availableRentals;
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900">
@@ -100,25 +104,33 @@ export default function ClientDashboard() {
           <p className="text-gray-500">No available rentals or lodgings found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleRentals.map(rental => {
-              // For each rental:
-              const lat = rental.location.coordinates[1];
-              const lng = rental.location.coordinates[0];
-              return (
-                <div key={rental.id} className="mb-6">
-                  <RentalCard rental={rental} />
-                  {/* Show location details if available */}
-                  {rental.location && Array.isArray(rental.location.coordinates) && (
-                    <div className="mt-2">
-                      <MapComponent rentals={[rental]} height="h-48" />
-                      <div className="text-sm text-gray-200 mt-1">
-                        Location: Lat {rental.location.coordinates[1]}, Lng {rental.location.coordinates[0]}
-                      </div>
+            {visibleRentals.map(rental => (
+              <div key={rental.id} className="mb-6">
+                <RentalCard rental={rental} />
+                {rental.location && Array.isArray(rental.location.coordinates) && (
+                  <div className="mt-2">
+                    <MapComponent
+                      rentals={[
+                        {
+                          ...rental,
+                          location: {
+                            ...rental.location,
+                            coordinates: [
+                              rental.location.coordinates[1], // lat
+                              rental.location.coordinates[0], // lng
+                            ],
+                          },
+                        },
+                      ]}
+                      height="h-48"
+                    />
+                    <div className="text-sm text-gray-200 mt-1">
+                      Location: Lat {rental.location.coordinates[1]}, Lng {rental.location.coordinates[0]}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </section>
