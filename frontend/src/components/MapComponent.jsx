@@ -64,7 +64,7 @@ export default function MapComponent({ rentals, userLocation, rentalLocation, he
           const lat = r.location?.coordinates?.[1];
           const lng = r.location?.coordinates?.[0];
           return lat && lng ? (
-            <Marker position={[lat, lng]} key={`rental-${index}`}>
+            <Marker position={[r.location.coordinates[1], r.location.coordinates[0]]} key={`rental-${index}`}>
               <Popup>
                 <strong>{r.title}</strong>
                 <br />

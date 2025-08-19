@@ -100,20 +100,25 @@ export default function ClientDashboard() {
           <p className="text-gray-500">No available rentals or lodgings found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleRentals.map(rental => (
-              <div key={rental.id} className="mb-6">
-                <RentalCard rental={rental} />
-                {/* Show location details if available */}
-                {rental.location && Array.isArray(rental.location.coordinates) && (
-                  <div className="mt-2">
-                    <MapComponent rentals={[rental]} height="h-48" />
-                    <div className="text-sm text-gray-200 mt-1">
-                      Location: Lat {rental.location.coordinates[1]}, Lng {rental.location.coordinates[0]}
+            {visibleRentals.map(rental => {
+              // For each rental:
+              const lat = rental.location.coordinates[1];
+              const lng = rental.location.coordinates[0];
+              return (
+                <div key={rental.id} className="mb-6">
+                  <RentalCard rental={rental} />
+                  {/* Show location details if available */}
+                  {rental.location && Array.isArray(rental.location.coordinates) && (
+                    <div className="mt-2">
+                      <MapComponent rentals={[rental]} height="h-48" />
+                      <div className="text-sm text-gray-200 mt-1">
+                        Location: Lat {rental.location.coordinates[1]}, Lng {rental.location.coordinates[0]}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
