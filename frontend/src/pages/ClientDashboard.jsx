@@ -8,6 +8,7 @@ export default function ClientDashboard() {
   const [availableRentals, setAvailableRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [propertyType, setPropertyType] = useState('all');
+  const [searchTown, setSearchTown] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,6 +21,11 @@ export default function ClientDashboard() {
         if (propertyType !== 'all') {
           filtered = filtered.filter(r => r.mode === propertyType);
         }
+        if (searchTown.trim() !== '') {
+          filtered = filtered.filter(r =>
+            r.town && r.town.toLowerCase().includes(searchTown.trim().toLowerCase())
+          );
+        }
         setAvailableRentals(filtered);
       } catch (err) {
         setAvailableRentals([]);
@@ -27,7 +33,7 @@ export default function ClientDashboard() {
       setLoading(false);
     };
     fetchAvailableRentals();
-  }, [propertyType]);
+  }, [propertyType, searchTown]);
 
   // Rentals with valid location for map
   const rentalsWithLocation = availableRentals.filter(
@@ -42,7 +48,7 @@ export default function ClientDashboard() {
 
       <section className="mb-8">
         <h3 className="text-xl font-semibold mb-4 text-white">Available Rentals & Lodgings</h3>
-        <div className="flex justify-center mb-6">
+        <div className="flex flex-col md:flex-row justify-center gap-4 mb-6">
           <select
             value={propertyType}
             onChange={e => setPropertyType(e.target.value)}
@@ -52,6 +58,13 @@ export default function ClientDashboard() {
             <option value="rental">Rental (Monthly)</option>
             <option value="lodging">Lodging / AirBnB (Nightly)</option>
           </select>
+          <input
+            type="text"
+            value={searchTown}
+            onChange={e => setSearchTown(e.target.value)}
+            placeholder="Search by town..."
+            className="bg-gray-800 text-white px-4 py-2 rounded border border-gray-700"
+          />
         </div>
 
         {rentalsWithLocation.length > 0 && (
@@ -122,7 +135,10 @@ export default function ClientDashboard() {
                     {rental.status === 'booked' ? 'Booked' : (rental.status || 'available')}
                   </span>
                   <span className="bg-gray-700 text-white px-2 py-1 rounded text-xs">
-                    Owner: {rental.landlord_name || 'N/A'}
+                    Owner: {rental.users?.full_name || rental.full_name || 'N/A'}
+                  </span>
+                  <span className="bg-gray-700 text-white px-2 py-1 rounded text-xs">
+                    Contact: {rental.users?.phone || rental.phone || 'N/A'}
                   </span>
                 </div>
                 <div className="text-gray-700 text-sm mb-2">
@@ -131,9 +147,6 @@ export default function ClientDashboard() {
                 </div>
                 <div className="text-gray-700 text-sm mb-2">
                   <strong>Bedrooms:</strong> {rental.bedrooms || 'N/A'} | <strong>Bathrooms:</strong> {rental.bathrooms || 'N/A'}
-                </div>
-                <div className="text-gray-700 text-sm mb-2">
-                  <strong>Contact:</strong> {rental.phone || 'N/A'}
                 </div>
                 {rental.location && Array.isArray(rental.location.coordinates) && (
                   <div className="mt-2">
