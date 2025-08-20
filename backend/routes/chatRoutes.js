@@ -90,22 +90,6 @@ router.get('/messages/recent/:userId', async (req, res) => {
   }
 });
 
-// Fetch all messages between admin and a user (not rental-specific)
-router.get('/messages/admin/:adminId/:userId', async (req, res) => {
-  const { adminId, userId } = req.params;
-  try {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .or(`and(sender_id.eq.${adminId},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${adminId})`)
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch admin-user messages' });
-  }
-});
-
 // Get all chats for a user
 router.get('/user/:userId', async (req, res) => {
   const { userId } = req.params;
@@ -123,6 +107,23 @@ router.post('/message', async (req, res) => {
   const { data, error } = await supabase.from('messages').insert([message]).select();
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data[0]);
+});
+
+// Get all messages between admin and a user
+router.get('/admin/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    // Adjust this query to match your chat schema
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`from.eq.${userId},to.eq.${userId}`)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
 });
 
 module.exports = router;

@@ -79,7 +79,7 @@ router.get('/all', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('rentals')
-      .select('*, users!inner(full_name)')
+      .select('*, users!inner(id, full_name, phone, role, approved)')
       .order('created_at', { ascending: false });
     if (error) throw error;
     // Add landlord_name for compatibility

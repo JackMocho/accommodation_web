@@ -3,13 +3,19 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import MapComponent from '../components/MapComponent';
+import ChatInbox from '../components/ChatInbox';
+import Chat from '../components/Chat';
+import { useAuth } from '../context/AuthContext';
 
 export default function ClientDashboard() {
   const [availableRentals, setAvailableRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [propertyType, setPropertyType] = useState('all');
   const [searchTown, setSearchTown] = useState('');
+  const [showChat, setShowChat] = useState(false);
+  const [chatRental, setChatRental] = useState(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchAvailableRentals = async () => {
@@ -28,6 +34,7 @@ export default function ClientDashboard() {
         }
         setAvailableRentals(filtered);
       } catch (err) {
+        console.error('Supabase insert error:', err);
         setAvailableRentals([]);
       }
       setLoading(false);
@@ -42,6 +49,13 @@ export default function ClientDashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900 min-h-screen">
+      {/* Chat Inbox for client */}
+      {user && (
+        <div className="mb-8">
+          <ChatInbox userId={user.id} />
+        </div>
+      )}
+
       <h2 className="text-2xl font-bold mb-6 text-white">
         Client Dashboard
       </h2>
@@ -170,6 +184,16 @@ export default function ClientDashboard() {
                     </div>
                   </div>
                 )}
+                <button
+                  className="bg-blue-700 text-white px-3 py-1 rounded mt-2"
+                  onClick={e => {
+                    e.stopPropagation();
+                    setShowChat(true);
+                    setChatRental(rental);
+                  }}
+                >
+                  Chat with Landlord
+                </button>
               </div>
             ))}
           </div>
@@ -188,6 +212,26 @@ export default function ClientDashboard() {
           </a>
         </button>
       </div>
+      {/* Chat Modal */}
+      {showChat && chatRental && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
+              onClick={() => setShowChat(false)}
+            >
+              &times;
+            </button>
+            <Chat
+              rentalId={chatRental.id}
+              userId={user?.id}
+              receiverId={chatRental.users?.id}
+              userName={user?.full_name || user?.name}
+              userPhone={user?.phone}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

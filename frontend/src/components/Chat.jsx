@@ -62,12 +62,13 @@ export default function Chat({ rentalId, landlordId, userName, userPhone, adminU
       return;
     }
     try {
-      await api.post('/chat/send', {
+      const payload = {
         sender_id: userId,
         receiver_id: receiverId,
-        message: messageToSend,
-        rental_id: rentalIdToSend,
-      });
+        message: newMessage,
+        rental_id: rentalId,
+      };
+      await api.post('/chat/send', payload);
       setNewMessage('');
       setHasSentFirst(true);
     } catch (err) {

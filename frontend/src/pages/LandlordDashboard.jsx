@@ -3,12 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useSocket from '../hooks/useSocket';
 import NotificationBell from '../components/NotificationBell';
-import { useAuth } from '../context/AuthContext';
-import EditRentalForm from './EditRentalForm';
-import Chat from '../components/Chat';
 import api from '../utils/api';
 import axios from 'axios';
 import MapComponent from '../components/MapComponent';
+import ChatInbox from '../components/ChatInbox';
+import Chat from '../components/Chat';
+import { useAuth } from '../context/AuthContext';
 
 // Integrated RentalCard with map and status toggle
 function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
@@ -95,6 +95,9 @@ export default function LandlordDashboard() {
   const [selectedChatUser, setSelectedChatUser] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [selectedRental, setSelectedRental] = useState(null);
+  const [showChat, setShowChat] = useState(false);
+  const [chatRental, setChatRental] = useState(null);
+  const [chatClientId, setChatClientId] = useState(null);
   const { notifications, clearNotifications } = useSocket();
   const { user } = useAuth();
   const token = localStorage.getItem('token');
@@ -223,6 +226,13 @@ export default function LandlordDashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900">
+      {/* Chat Inbox for landlord */}
+      {user && (
+        <div className="mb-8">
+          <ChatInbox userId={user.id} />
+        </div>
+      )}
+
       <div className="mb-2">
         <h2 className="text-2xl font-bold">{welcomeMsg}</h2>
       </div>
@@ -515,6 +525,109 @@ export default function LandlordDashboard() {
             </div>
           </div>
         </section>
+      )}
+      {/* Rentals Section */}
+      <section className="mb-8">
+        <h3 className="text-xl font-semibold mb-4">Your Rentals</h3>
+        {rentals.length === 0 ? (
+          <p className="text-gray-500">No rentals found.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {rentals.map(rental => (
+              <div key={rental.id} className="bg-white rounded shadow p-4 flex flex-col mb-6">
+                <div onClick={() => navigate(`/rentals/${rental.id}`)} className="cursor-pointer">
+                  {rental.images && rental.images.length > 0 && (
+                    <img
+                      src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
+                      alt={rental.title}
+                      className="w-full h-40 object-cover rounded mb-2"
+                    />
+                  )}
+                  <h4 className="font-bold text-lg mb-1">{rental.title}</h4>
+                  <p className="text-gray-400 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {rental.mode === 'lodging' ? (
+                      <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
+                        KES {rental.nightly_price}/night
+                      </span>
+                    ) : (
+                      <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
+                        KES {rental.price}/month
+                      </span>
+                    )}
+                    <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">{rental.type}</span>
+                    <span className="bg-yellow-700 text-white px-2 py-1 rounded text-xs">
+                      {rental.status && rental.status.trim().toLowerCase() === 'booked' ? 'Booked' : 'Available'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => setEditingRentalId(rental.id)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteRental(rental.id)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
+                  {rental.status !== 'booked' ? (
+                    <button
+                      onClick={() => handleBookRental(rental.id)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                    >
+                      Mark as Booked
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleMakeAvailable(rental.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                    >
+                      Mark as Available
+                    </button>
+                  )}
+                </div>
+                {editingRentalId === rental.id && (
+                  <EditRentalForm
+                    rental={rental}
+                    onSave={() => setEditingRentalId(null)}
+                    onCancel={() => setEditingRentalId(null)}
+                  />
+                )}
+                <button
+                  className="bg-blue-700 text-white px-3 py-1 rounded mt-2"
+                  onClick={() => { setShowChat(true); setChatRental(rental); setChatClientId(null); }}
+                >
+                  Chat with Client
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Chat Modal */}
+      {showChat && chatRental && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
+              onClick={() => setShowChat(false)}
+            >
+              &times;
+            </button>
+            <Chat
+              rentalId={chatRental.id}
+              landlordId={user.id}
+              userName={user.full_name || user.name}
+              userPhone={user.phone}
+              otherUserId={chatClientId}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

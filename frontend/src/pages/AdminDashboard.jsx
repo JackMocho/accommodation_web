@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import MapComponent from '../components/MapComponent';
+import ChatInbox from '../components/ChatInbox';
+import Chat from '../components/Chat';
 
 export default function AdminDashboard() {
   const { user, token: contextToken } = useAuth();
@@ -19,6 +21,8 @@ export default function AdminDashboard() {
   const [chatInput, setChatInput] = useState('');
   const [chatError, setChatError] = useState('');
   const [selectedRental, setSelectedRental] = useState(null);
+  const [showChat, setShowChat] = useState(false);
+  const [chatUserId, setChatUserId] = useState(null);
 
   // Helper for auth headers
   const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
@@ -200,6 +204,13 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-800 to-purple-900 text-white">
+      {/* Chat Inbox for admin */}
+      {user && (
+        <div className="mb-8">
+          <ChatInbox userId={user.id} />
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
       {error && <div className="bg-red-700 text-white p-2 rounded mb-4">{error}</div>}
       {success && <div className="bg-green-700 text-white p-2 rounded mb-4">{success}</div>}
@@ -435,6 +446,26 @@ export default function AdminDashboard() {
             <button type="button" className="bg-gray-600 px-4 py-2 rounded text-white" onClick={() => { setSelectedUser(null); setMessages([]); }}>Close</button>
           </form>
         </section>
+      )}
+
+      {/* Chat Modal */}
+      {showChat && chatUserId && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
+              onClick={() => setShowChat(false)}
+            >
+              &times;
+            </button>
+            <Chat
+              landlordId={user.id}
+              userName={user.full_name || user.name}
+              userPhone={user.phone}
+              otherUserId={chatUserId}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
