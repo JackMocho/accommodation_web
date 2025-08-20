@@ -116,7 +116,7 @@ router.get('/', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('rentals')
-      .select('*')
+      .select('*, users!inner(id, full_name, phone, role, approved)')
       .eq('status', 'available');
     if (error) throw error;
     res.json(data);

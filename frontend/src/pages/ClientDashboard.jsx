@@ -44,7 +44,7 @@ export default function ClientDashboard() {
 
   // Rentals with valid location for map
   const rentalsWithLocation = availableRentals.filter(
-    r => r.location && Array.isArray(r.location.coordinates)
+    r => r.location && Array.isArray(r.location.coordinates) && r.location.coordinates.length === 2
   );
 
   return (
