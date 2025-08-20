@@ -220,11 +220,7 @@ export default function AdminDashboard() {
       {error && <div className="bg-red-700 text-white p-2 rounded mb-4">{error}</div>}
       {success && <div className="bg-green-700 text-white p-2 rounded mb-4">{success}</div>}
 
-      {/* Map with all rentals */}
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">All Rentals Map</h2>
-        <MapComponent rentals={rentalsWithLatLng} height="h-96" />
-      </section>
+      
 
       {/* Stats */}
       <section className="mb-8">
