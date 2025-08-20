@@ -1,5 +1,6 @@
 // filepath: d:\Real property App\frontend\src\pages\LandlordDashboard.jsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import MapComponent from '../components/MapComponent';
 
@@ -7,6 +8,7 @@ export default function ClientDashboard() {
   const [availableRentals, setAvailableRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [propertyType, setPropertyType] = useState('all');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAvailableRentals = async () => {
@@ -82,7 +84,14 @@ export default function ClientDashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {availableRentals.map(rental => (
-              <div key={rental.id} className="bg-white rounded shadow p-4 flex flex-col mb-6">
+              <div
+                key={rental.id}
+                className="bg-white rounded shadow p-4 flex flex-col mb-6 cursor-pointer hover:shadow-lg transition"
+                onClick={() => navigate(`/rentals/${rental.id}`)}
+                title="Click to view full details"
+              >
+                {/* Rental Title */}
+                <h4 className="font-bold text-lg mb-1 text-blue-900">{rental.title}</h4>
                 {rental.images && rental.images.length > 0 && (
                   <img
                     src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
@@ -90,8 +99,7 @@ export default function ClientDashboard() {
                     className="w-full h-40 object-cover rounded mb-2"
                   />
                 )}
-                <h4 className="font-bold text-lg mb-1">{rental.title}</h4>
-                <p className="text-gray-600 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
+                <p className="text-gray-600 text-sm mb-2">{rental.description}</p>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {rental.mode === 'lodging' || rental.mode === 'airbnb' ? (
                     <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
@@ -109,6 +117,16 @@ export default function ClientDashboard() {
                   <span className="bg-gray-700 text-white px-2 py-1 rounded text-xs">
                     Owner: {rental.landlord_name || 'N/A'}
                   </span>
+                </div>
+                <div className="text-gray-700 text-sm mb-2">
+                  <strong>Town:</strong> {rental.town || 'N/A'}
+                  {rental.address && <> | <strong>Address:</strong> {rental.address}</>}
+                </div>
+                <div className="text-gray-700 text-sm mb-2">
+                  <strong>Bedrooms:</strong> {rental.bedrooms || 'N/A'} | <strong>Bathrooms:</strong> {rental.bathrooms || 'N/A'}
+                </div>
+                <div className="text-gray-700 text-sm mb-2">
+                  <strong>Contact:</strong> {rental.phone || 'N/A'}
                 </div>
                 {rental.location && Array.isArray(rental.location.coordinates) && (
                   <div className="mt-2">
