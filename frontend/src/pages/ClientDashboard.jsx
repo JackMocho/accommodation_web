@@ -86,8 +86,15 @@ export default function ClientDashboard() {
             {availableRentals.map(rental => (
               <div
                 key={rental.id}
-                className="bg-white rounded shadow p-4 flex flex-col mb-6 cursor-pointer hover:shadow-lg transition"
+                className="bg-white rounded shadow p-4 flex flex-col mb-6 cursor-pointer hover:shadow-lg transition outline-none"
+                tabIndex={0}
+                role="button"
                 onClick={() => navigate(`/rentals/${rental.id}`)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate(`/rentals/${rental.id}`);
+                  }
+                }}
                 title="Click to view full details"
               >
                 {/* Rental Title */}
