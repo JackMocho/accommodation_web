@@ -32,8 +32,8 @@ router.post('/submit', async (req, res) => {
 
     // Build location object if lat/lng provided
     let finalLocation = location;
-    if (!finalLocation && lat && lng) {
-      finalLocation = { coordinates: [lng, lat] };
+    if ((!finalLocation || !finalLocation.coordinates) && lat && lng) {
+      finalLocation = { type: 'Point', coordinates: [lng, lat] };
     }
 
     // Ensure both price and nightly_price are numbers (default to 0)

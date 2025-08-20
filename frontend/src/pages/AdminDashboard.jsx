@@ -23,6 +23,7 @@ export default function AdminDashboard() {
   const [selectedRental, setSelectedRental] = useState(null);
   const [showChat, setShowChat] = useState(false);
   const [chatUserId, setChatUserId] = useState(null);
+  const [searchTown, setSearchTown] = useState('');
 
   // Helper for auth headers
   const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
@@ -199,8 +200,12 @@ export default function AdminDashboard() {
       },
     }));
 
-  // Show all rentals
-  const filteredRentals = rentals;
+  // Search/filter rentals by town
+  const filteredRentals = rentals.filter(r =>
+    searchTown.trim() === ''
+      ? true
+      : (r.town && r.town.toLowerCase().includes(searchTown.trim().toLowerCase()))
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-800 to-purple-900 text-white">
@@ -331,10 +336,19 @@ export default function AdminDashboard() {
       {/* Rentals */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4">All Rentals</h2>
+        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+          <input
+            type="text"
+            value={searchTown}
+            onChange={e => setSearchTown(e.target.value)}
+            placeholder="Search by town..."
+            className="bg-gray-800 text-white px-4 py-2 rounded border border-gray-700"
+          />
+        </div>
         <table className="w-full table-auto bg-gray-800 rounded">
           <thead>
             <tr>
-              <th>Title</th><th>Description</th><th>Price</th><th>Status</th><th>Map</th><th>Action</th>
+              <th>Title</th><th>Town</th><th>Price</th><th>Status</th><th>Map</th><th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -351,7 +365,7 @@ export default function AdminDashboard() {
                       {r.title}
                     </button>
                   </td>
-                  <td>{r.description}</td>
+                  <td>{r.town}</td>
                   <td>
                     {r.mode === 'lodging'
                       ? `KES ${r.nightly_price}/night`
@@ -400,7 +414,7 @@ export default function AdminDashboard() {
               &times;
             </button>
             <h2 className="text-2xl font-bold mb-2">{selectedRental.title}</h2>
-            <p className="mb-2">{selectedRental.description}</p>
+            <p className="mb-2"><strong>Town:</strong> {selectedRental.town}</p>
             <div className="mb-4">
               <strong>Status:</strong> {selectedRental.status}
             </div>
@@ -412,7 +426,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-      
       )}
 
       {/* Chat Section */}
@@ -447,6 +460,18 @@ export default function AdminDashboard() {
           </form>
         </section>
       )}
+
+      <section className="mb-12">
+        <h2 className="text-xl font-semibold mb-4 text-center">All Rental & Lodging Locations</h2>
+        {rentalsWithLatLng.length === 0 ? (
+          <p className="text-gray-500 text-center">No rentals or lodgings with location data.</p>
+        ) : (
+          <div className="w-full h-96 mb-8 rounded overflow-hidden">
+            {/* You can use MapComponent here or your custom map logic */}
+            <MapComponent rentals={rentalsWithLatLng} height="h-96" />
+          </div>
+        )}
+      </section>
 
       {/* Chat Modal */}
       {showChat && chatUserId && (
