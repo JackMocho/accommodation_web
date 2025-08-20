@@ -73,7 +73,21 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
       </div>
       {rental.location && Array.isArray(rental.location.coordinates) && (
         <div className="mt-2">
-          <MapComponent rentals={[rental]} height="h-40" />
+          <MapComponent
+            rentals={[
+              {
+                ...rental,
+                location: {
+                  ...rental.location,
+                  coordinates: [
+                    rental.location.coordinates[1], // lat
+                    rental.location.coordinates[0], // lng
+                  ],
+                },
+              },
+            ]}
+            height="h-40"
+          />
         </div>
       )}
     </div>

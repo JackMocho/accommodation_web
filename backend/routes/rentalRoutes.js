@@ -14,12 +14,11 @@ router.post('/submit', async (req, res) => {
       type,
       status,
       images,
-      lat,
-      lng,
+      latitude,
+      longitude,
       town,
       user_id,
       landlord_id,
-      location,
     } = req.body;
 
     // Accept either user_id or landlord_id
@@ -30,11 +29,12 @@ router.post('/submit', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Build location object if lat/lng provided
-    let finalLocation = location;
-    if ((!finalLocation || !finalLocation.coordinates) && lat && lng) {
-      finalLocation = { type: 'Point', coordinates: [lng, lat] };
-    }
+    const lat = Number(req.body.latitude || req.body.lat);
+    const lng = Number(req.body.longitude || req.body.lng);
+
+    const location = (lat && lng)
+      ? { type: 'Point', coordinates: [lat, lng] }
+      : null;
 
     // Ensure both price and nightly_price are numbers (default to 0)
     const monthlyPrice = Number(price) || 0;
@@ -53,7 +53,7 @@ router.post('/submit', async (req, res) => {
           type,
           status: status || 'available',
           images: images,
-          location: finalLocation,
+          location: location,
           town,
           landlord_id: finalLandlordId,
           user_id: finalLandlordId,
