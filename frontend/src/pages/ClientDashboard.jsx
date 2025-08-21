@@ -81,28 +81,26 @@ export default function ClientDashboard() {
           />
         </div>
 
-        {rentalsWithLocation.length > 0 && (
-          <div className="mb-8">
-            <h4 className="text-lg font-semibold mb-2 text-center text-white">All Rental & Lodging Locations</h4>
-            <MapComponent
-              rentals={rentalsWithLocation.map(r =>
-                r.location && Array.isArray(r.location.coordinates)
-                  ? {
-                      ...r,
-                      location: {
-                        ...r.location,
-                        coordinates: [
-                          r.location.coordinates[0], // lat
-                          r.location.coordinates[1], // lng
-                        ],
-                      },
-                    }
-                  : r
-              )}
-              height="h-64 md:h-96"
-            />
-          </div>
-        )}
+        <div className="mb-8">
+          <h4 className="text-lg font-semibold mb-2 text-center text-white">All Rental & Lodging Locations</h4>
+          <MapComponent
+            rentals={rentalsWithLocation.map(r =>
+              r.location && Array.isArray(r.location.coordinates)
+                ? {
+                    ...r,
+                    location: {
+                      ...r.location,
+                      coordinates: [
+                        r.location.coordinates[0], // lat
+                        r.location.coordinates[1], // lng
+                      ],
+                    },
+                  }
+                : r
+            )}
+            height="h-64 md:h-96"
+          />
+        </div>
 
         {loading ? (
           <p className="text-gray-400">Loading...</p>

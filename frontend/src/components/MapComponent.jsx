@@ -7,25 +7,18 @@ import L from 'leaflet';
 const { BaseLayer } = LayersControl;
 const DEFAULT_CENTER = [-1.2833, 36.8167]; // Nairobi fallback
 
-// Fix Leaflet's default icon paths to use CDN
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-export default function MapComponent({ rentals, userLocation, rentalLocation, height = "h-64 md:h-96" }) {
+export default function MapComponent({ rentals = [], userLocation, rentalLocation, height = "h-64 md:h-96" }) {
   const [zoom, setZoom] = useState(15);
 
-  if (!rentals || rentals.length === 0) return null;
-
-  // Center map between both points if available
+  // Find first valid rental location for centering, else fallback
   let center = DEFAULT_CENTER;
-  if (userLocation && rentalLocation) {
+  let firstRentalWithLocation = rentals.find(
+    r => r.location && Array.isArray(r.location.coordinates) && r.location.coordinates.length === 2
+  );
+  if (firstRentalWithLocation) {
     center = [
-      (userLocation[0] + rentalLocation[0]) / 2,
-      (userLocation[1] + rentalLocation[1]) / 2,
+      firstRentalWithLocation.location.coordinates[0], // lat
+      firstRentalWithLocation.location.coordinates[1], // lng
     ];
   } else if (userLocation) {
     center = userLocation;
@@ -61,7 +54,7 @@ export default function MapComponent({ rentals, userLocation, rentalLocation, he
 
         {/* Rental markers */}
         {rentals.map((r, index) => {
-          // Use coordinates[0] as lat, coordinates[1] as lng
+          // Use [lat, lng] everywhere in frontend
           const lat = r.location?.coordinates?.[0];
           const lng = r.location?.coordinates?.[1];
           return (typeof lat === 'number' && typeof lng === 'number') ? (

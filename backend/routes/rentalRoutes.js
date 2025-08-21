@@ -16,31 +16,34 @@ router.post('/submit', async (req, res) => {
       images,
       latitude,
       longitude,
+      location, // <-- use this
       town,
       user_id,
       landlord_id,
     } = req.body;
 
-    // Accept either user_id or landlord_id
     const finalLandlordId = landlord_id || user_id;
 
-    // Validate required fields
     if (!title || !mode || !type || !finalLandlordId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const lat = Number(req.body.latitude || req.body.lat);
-    const lng = Number(req.body.longitude || req.body.lng);
+    let lat = latitude, lng = longitude;
+    if ((!lat || !lng) && location && Array.isArray(location.coordinates)) {
+      lat = location.coordinates[0];
+      lng = location.coordinates[1];
+    }
 
-    const location = (lat && lng)
-      ? { type: 'Point', coordinates: [lat, lng] }
-      : null;
+    // Prepare geometry for PostGIS (WKT)
+    let geom = null;
+    if (lat && lng) {
+      geom = `SRID=4326;POINT(${lng} ${lat})`;
+    }
 
-    // Ensure both price and nightly_price are numbers (default to 0)
     const monthlyPrice = Number(price) || 0;
     const nightlyPrice = Number(nightly_price) || 0;
 
-    // Insert into DB
+    // Insert into DB (assuming Supabase supports WKT for geometry)
     const { data, error } = await supabase
       .from('rentals')
       .insert([
@@ -52,13 +55,14 @@ router.post('/submit', async (req, res) => {
           mode,
           type,
           status: status || 'available',
-          images: images,
-          location: location,
+          images,
+          latitude: lat,
+          longitude: lng,
+          location, // JSON object
+          geom,
           town,
           landlord_id: finalLandlordId,
           user_id: finalLandlordId,
-          latitude: lat || null,
-          longitude: lng || null,
         }
       ])
       .select();

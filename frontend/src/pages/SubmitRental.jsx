@@ -16,6 +16,7 @@ export default function SubmitRental() {
     images: [],
     town: '',
     location: null,
+    coordinates: '', // <-- add this
     mode: 'rental',
   });
 
@@ -66,45 +67,47 @@ export default function SubmitRental() {
     });
   };
 
+  // When picking location, store as string "lat, lng"
   const handleLocationChange = (loc) => {
-    // Ensure [lat, lng] order when picking location
     if (loc && Array.isArray(loc.coordinates) && loc.coordinates.length === 2) {
       setForm((prev) => ({
         ...prev,
-        location: { ...loc, coordinates: [loc.coordinates[0], loc.coordinates[1]] }
+        coordinates: `${loc.coordinates[0]}, ${loc.coordinates[1]}`,
+        location: loc // keep for compatibility if needed
       }));
-    } else {
-      setForm((prev) => ({ ...prev, location: loc }));
     }
   };
 
-  const userId = localStorage.getItem('userId');
-  const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('userId'); // Make sure this is set!
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setSuccessMsg('');
-    // Ensure lat/lng are numbers
-    const latitude = typeof lat === 'number' ? lat : null;
-    const longitude = typeof lng === 'number' ? lng : null;
+
+    // Parse coordinates string
+    let latitude = null, longitude = null;
+    if (form.coordinates) {
+      const [latStr, lngStr] = form.coordinates.split(',').map(s => s.trim());
+      latitude = parseFloat(latStr);
+      longitude = parseFloat(lngStr);
+    }
+
+    // Always send location as GeoJSON [lng, lat] for backend/PostGIS
+    let location = form.location;
+    if (!location && latitude !== null && longitude !== null) {
+      location = { type: 'Point', coordinates: [longitude, latitude] }; // GeoJSON standard
+    }
 
     const payload = {
-      title: form.title,
-      description: form.description,
-      price: form.mode === 'lodging' ? 0 : Number(form.price) || 0,
-      nightly_price: form.mode === 'lodging' ? Number(form.nightly_price) || 0 : 0,
-      mode: form.mode,
-      type: form.type,
-      status: form.status,
-      images: form.images,
-      // FIX: Always send [lat, lng] order
-      location: form.location,
+      ...form,
+      coordinates: form.coordinates, // send as string
+      latitude,
+      longitude,
+      location, // send as GeoJSON
       landlord_id: userId,
-      town: form.town,
-      lat: latitude,
-      lng: longitude,
     };
+
     try {
       await api.post('/rentals/submit', payload);
       setSuccessMsg('Rental submitted successfully!');
