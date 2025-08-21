@@ -1,11 +1,83 @@
 // filepath: d:\Real property App\frontend\src\pages\LandlordDashboard.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import MapComponent from '../components/MapComponent';
 import ChatInbox from '../components/ChatInbox';
 import Chat from '../components/Chat';
 import { useAuth } from '../context/AuthContext';
+
+function ImageCarousel({ images = [], alt }) {
+  const [index, setIndex] = useState(0);
+  const touchStartX = useRef(null);
+
+  const handlePrev = (e) => {
+    e.stopPropagation();
+    setIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNext = (e) => {
+    e.stopPropagation();
+    setIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  // Touch events for swipe
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    if (deltaX > 50) handlePrev(e);
+    else if (deltaX < -50) handleNext(e);
+    touchStartX.current = null;
+  };
+
+  if (!images.length) return null;
+
+  return (
+    <div
+      className="relative w-full h-40 mb-2 overflow-hidden rounded"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <img
+        src={Array.isArray(images) ? images[index] : images}
+        alt={alt}
+        className="w-full h-40 object-cover"
+      />
+      {images.length > 1 && (
+        <>
+          <button
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-60 text-white rounded-full px-2 py-1"
+            onClick={handlePrev}
+            aria-label="Previous image"
+            tabIndex={0}
+          >
+            &#8592;
+          </button>
+          <button
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-60 text-white rounded-full px-2 py-1"
+            onClick={handleNext}
+            aria-label="Next image"
+            tabIndex={0}
+          >
+            &#8594;
+          </button>
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`inline-block w-2 h-2 rounded-full ${i === index ? 'bg-white' : 'bg-gray-400'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function ClientDashboard() {
   const [availableRentals, setAvailableRentals] = useState([]);
@@ -125,10 +197,9 @@ export default function ClientDashboard() {
                 {/* Rental Title */}
                 <h4 className="font-bold text-lg mb-1 text-blue-900">{rental.title}</h4>
                 {rental.images && rental.images.length > 0 && (
-                  <img
-                    src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
+                  <ImageCarousel
+                    images={Array.isArray(rental.images) ? rental.images : JSON.parse(rental.images)}
                     alt={rental.title}
-                    className="w-full h-40 object-cover rounded mb-2"
                   />
                 )}
                 <p className="text-gray-600 text-sm mb-2">{rental.description}</p>

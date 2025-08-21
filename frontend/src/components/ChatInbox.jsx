@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 const adminUserId = 1; // Set your actual admin user ID here
 
-export default function ChatInbox({ userId }) {
+export default function ChatInbox({ userId, onReply }) {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
@@ -43,12 +43,21 @@ export default function ChatInbox({ userId }) {
               {/* Reply button: only show if the current user is the landlord (receiver) */}
               {msg.receiver_id === Number(userId) && (
                 <div className="mt-2">
-                  <Link
-                    to={`/rentals/${msg.rental_id}?replyTo=${msg.sender_id}`}
-                    className="text-blue-400 underline text-xs"
-                  >
-                    Reply
-                  </Link>
+                  {onReply ? (
+                    <button
+                      className="text-blue-400 underline text-xs"
+                      onClick={() => onReply(msg)}
+                    >
+                      Reply
+                    </button>
+                  ) : (
+                    <Link
+                      to={`/rentals/${msg.rental_id}?replyTo=${msg.sender_id}`}
+                      className="text-blue-400 underline text-xs"
+                    >
+                      Reply
+                    </Link>
+                  )}
                 </div>
               )}
             </li>

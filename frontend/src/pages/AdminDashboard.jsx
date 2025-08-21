@@ -220,8 +220,6 @@ export default function AdminDashboard() {
       {error && <div className="bg-red-700 text-white p-2 rounded mb-4">{error}</div>}
       {success && <div className="bg-green-700 text-white p-2 rounded mb-4">{success}</div>}
 
-      
-
       {/* Stats */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4">System Stats</h2>
@@ -320,7 +318,15 @@ export default function AdminDashboard() {
                     )}
                   </td>
                   <td>
-                    <button onClick={() => fetchMessages(u.id)} className="bg-blue-600 px-2 py-1 rounded">Chat</button>
+                    <button
+                      onClick={() => {
+                        setShowChat(true);
+                        setChatUserId(u.id);
+                      }}
+                      className="bg-blue-600 px-2 py-1 rounded"
+                    >
+                      Chat
+                    </button>
                   </td>
                 </tr>
               ))
@@ -484,6 +490,7 @@ export default function AdminDashboard() {
               userName={user.full_name || user.name}
               userPhone={user.phone}
               otherUserId={chatUserId}
+              adminUserId={user.id}
             />
           </div>
         </div>

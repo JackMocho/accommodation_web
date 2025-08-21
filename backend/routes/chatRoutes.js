@@ -113,11 +113,10 @@ router.post('/message', async (req, res) => {
 router.get('/admin/:userId', async (req, res) => {
   const { userId } = req.params;
   try {
-    // Adjust this query to match your chat schema
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .or(`from.eq.${userId},to.eq.${userId}`)
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('created_at', { ascending: true });
     if (error) throw error;
     res.json(data);
