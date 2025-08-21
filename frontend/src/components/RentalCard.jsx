@@ -6,8 +6,8 @@ const RentalCard = ({ rental, onDelete, onEdit, actionButton }) => {
   const navigate = useNavigate();
 
   // For each rental:
-  const lat = rental.location.coordinates[1];
-  const lng = rental.location.coordinates[0];
+  const lat = rental.location.coordinates[0];
+  const lng = rental.location.coordinates[1];
 
   return (
     <div className="bg-white rounded shadow p-4 flex flex-col relative">

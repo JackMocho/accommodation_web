@@ -80,8 +80,8 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
                 location: {
                   ...rental.location,
                   coordinates: [
-                    rental.location.coordinates[1], // lat
-                    rental.location.coordinates[0], // lng
+                    rental.location.coordinates[0], // lat
+                    rental.location.coordinates[1], // lng
                   ],
                 },
               },

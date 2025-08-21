@@ -92,8 +92,8 @@ export default function ClientDashboard() {
                       location: {
                         ...r.location,
                         coordinates: [
-                          r.location.coordinates[1], // lat
-                          r.location.coordinates[0], // lng
+                          r.location.coordinates[0], // lat
+                          r.location.coordinates[1], // lng
                         ],
                       },
                     }
