@@ -57,9 +57,7 @@ export default function Chat({ rentalId, landlordId, userName, userPhone, adminU
       rentalIdToSend = null;
     }
     if (!receiverId) {
-      alert('Missing receiver information. Please try again later.');
-      console.error('Missing fields:', { userId, receiverId, rentalId: rentalIdToSend, newMessage });
-      return;
+      return <div className="text-red-500">Unable to start chat: missing landlord information.</div>;
     }
     try {
       const payload = {

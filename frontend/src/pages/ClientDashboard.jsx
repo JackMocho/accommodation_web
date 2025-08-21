@@ -294,7 +294,12 @@ export default function ClientDashboard() {
             <Chat
               rentalId={chatRental.id}
               userId={user?.id}
-              receiverId={chatRental.users?.id}
+              receiverId={
+                chatRental.users?.id ||
+                chatRental.landlord_id ||
+                chatRental.user_id ||
+                chatRental.owner_id // fallback if you have this field
+              }
               userName={user?.full_name || user?.name}
               userPhone={user?.phone}
             />
