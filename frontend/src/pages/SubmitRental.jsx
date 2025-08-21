@@ -31,7 +31,8 @@ export default function SubmitRental() {
     if (typeof lat === 'number' && typeof lng === 'number') {
       setForm((f) => ({
         ...f,
-        location: { type: 'Point', coordinates: [lng, lat] },
+        // FIX: Send [lat, lng] instead of [lng, lat]
+        location: { type: 'Point', coordinates: [lat, lng] },
       }));
     }
   }, [lat, lng]);
@@ -66,7 +67,15 @@ export default function SubmitRental() {
   };
 
   const handleLocationChange = (loc) => {
-    setForm((prev) => ({ ...prev, location: loc }));
+    // Ensure [lat, lng] order when picking location
+    if (loc && Array.isArray(loc.coordinates) && loc.coordinates.length === 2) {
+      setForm((prev) => ({
+        ...prev,
+        location: { ...loc, coordinates: [loc.coordinates[0], loc.coordinates[1]] }
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, location: loc }));
+    }
   };
 
   const userId = localStorage.getItem('userId');
@@ -89,7 +98,8 @@ export default function SubmitRental() {
       type: form.type,
       status: form.status,
       images: form.images,
-      location: form.location, // use picked location from LocationPicker
+      // FIX: Always send [lat, lng] order
+      location: form.location,
       landlord_id: userId,
       town: form.town,
       lat: latitude,
@@ -99,7 +109,7 @@ export default function SubmitRental() {
       await api.post('/rentals/submit', payload);
       setSuccessMsg('Rental submitted successfully!');
       setTimeout(() => {
-        navigate('/LandlordDashboard', { state: { successMsg: 'Your property was listed successfully!' } });
+        navigate('/HomePage', { state: { successMsg: 'Your property was listed successfully!' } });
       }, 1200);
     } catch (err) {
       alert(err.response?.data?.error || 'Submission failed');
