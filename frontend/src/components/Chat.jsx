@@ -16,22 +16,28 @@ export default function Chat({ rentalId, receiverId, userName, userPhone, adminU
     decoded = null;
   }
   const userId = decoded?.id;
-  const isLandlord = userId === landlordId;
+  const isLandlord = userId === adminUserId;
 
-  // Try to fetch messages only if user is landlord or has sent a message
-  useEffect(() => {
+  // Fetch messages
+  const fetchMessages = async () => {
     if (!rentalId || !userId) return;
+    setLoading(true);
+    try {
+      const res = await api.get(`/chat/messages/${rentalId}`);
+      setMessages(res.data);
+    } catch {
+      setMessages([]);
+    }
+    setLoading(false);
+  };
 
+  useEffect(() => {
     if (isLandlord || hasSentFirst) {
-      setLoading(true);
-      api
-        .get(`/chat/messages/${rentalId}`)
-        .then((res) => setMessages(res.data))
-        .catch(() => setMessages([]))
-        .finally(() => setLoading(false));
+      fetchMessages();
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line
   }, [rentalId, userId, isLandlord, hasSentFirst]);
 
   // Send message handler
@@ -39,12 +45,10 @@ export default function Chat({ rentalId, receiverId, userName, userPhone, adminU
     if (!newMessage.trim()) return;
     if (!userId) {
       alert('Missing user information. Please try again later.');
-      console.error('Missing fields:', { userId, receiverId, rentalId, newMessage });
       return;
     }
     if (!receiverId) {
       alert('Missing receiver information. Please try again later.');
-      console.error('Missing fields:', { userId, receiverId, rentalId, newMessage });
       return;
     }
     try {
@@ -57,6 +61,7 @@ export default function Chat({ rentalId, receiverId, userName, userPhone, adminU
       await api.post('/chat/send', payload);
       setNewMessage('');
       setHasSentFirst(true);
+      fetchMessages(); // <-- Refresh messages after sending
     } catch (err) {
       alert('Failed to send message');
       console.error(err);
