@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 
-export default function Chat({ rentalId, userId, receiverId, userName, userPhone, adminUserId, otherUserId }) {
+export default function Chat({ rentalId, receiverId, userName, userPhone, adminUserId, otherUserId }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [hasSentFirst, setHasSentFirst] = useState(false);
