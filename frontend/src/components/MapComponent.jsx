@@ -3,6 +3,17 @@ import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, LayersControl, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix Leaflet's default icon path so it works with Vite/React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 const { BaseLayer } = LayersControl;
 const DEFAULT_CENTER = [-1.2833, 36.8167]; // Nairobi fallback
