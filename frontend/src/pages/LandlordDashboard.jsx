@@ -216,8 +216,9 @@ export default function LandlordDashboard() {
     if (!window.confirm('Mark this rental as Booked?')) return;
     try {
       await api.put(`/rentals/${id}/book`, { status: 'booked' });
-      await fetchRentals();
-      alert('Rental marked as Booked!');
+      await fetchRentals(); // Refresh rentals after booking
+      setSuccessMsg('Rental marked as Booked!'); // Show success message
+      setTimeout(() => setSuccessMsg(''), 2000); // Optionally clear after 2s
     } catch (err) {
       alert('Failed to mark as Booked');
     }
