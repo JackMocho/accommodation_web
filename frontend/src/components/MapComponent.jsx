@@ -61,10 +61,11 @@ export default function MapComponent({ rentals, userLocation, rentalLocation, he
 
         {/* Rental markers */}
         {rentals.map((r, index) => {
-          const lat = r.location?.coordinates?.[1];
-          const lng = r.location?.coordinates?.[0];
-          return lat && lng ? (
-            <Marker position={[r.location.coordinates[1], r.location.coordinates[0]]} key={`rental-${index}`}>
+          // Use coordinates[0] as lat, coordinates[1] as lng
+          const lat = r.location?.coordinates?.[0];
+          const lng = r.location?.coordinates?.[1];
+          return (typeof lat === 'number' && typeof lng === 'number') ? (
+            <Marker position={[lat, lng]} key={`rental-${index}`}>
               <Popup>
                 <strong>{r.title}</strong>
                 <br />

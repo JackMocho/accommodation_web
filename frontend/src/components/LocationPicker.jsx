@@ -14,7 +14,7 @@ function LocationMarker({ position, setPosition }) {
 
 export default function LocationPicker({ value, onChange, height = "h-64 md:h-80" }) {
   const [position, setPosition] = useState(
-    value && value.coordinates ? [value.coordinates[1], value.coordinates[0]] : DEFAULT_POSITION
+    value && value.coordinates ? [value.coordinates[0], value.coordinates[1]] : DEFAULT_POSITION
   );
   const isFirstRender = useRef(true);
 
@@ -23,9 +23,9 @@ export default function LocationPicker({ value, onChange, height = "h-64 md:h-80
     if (
       value &&
       value.coordinates &&
-      (value.coordinates[1] !== position[0] || value.coordinates[0] !== position[1])
+      (value.coordinates[0] !== position[0] || value.coordinates[1] !== position[1])
     ) {
-      setPosition([value.coordinates[1], value.coordinates[0]]);
+      setPosition([value.coordinates[0], value.coordinates[1]]);
     }
     // eslint-disable-next-line
   }, [value]);
@@ -37,7 +37,7 @@ export default function LocationPicker({ value, onChange, height = "h-64 md:h-80
       return;
     }
     if (typeof onChange === 'function') {
-      onChange({ type: 'Point', coordinates: [position[1], position[0]] });
+      onChange({ type: 'Point', coordinates: [position[0], position[1]] });
     }
     // eslint-disable-next-line
   }, [position]);
