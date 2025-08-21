@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 
-export default function Chat({ rentalId, landlordId, userName, userPhone, adminUserId, otherUserId }) {
+export default function Chat({ rentalId, userId, receiverId, userName, userPhone, adminUserId, otherUserId }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [hasSentFirst, setHasSentFirst] = useState(false);
@@ -39,25 +39,13 @@ export default function Chat({ rentalId, landlordId, userName, userPhone, adminU
     if (!newMessage.trim()) return;
     if (!userId) {
       alert('Missing user information. Please try again later.');
-      console.error('Missing fields:', { userId, landlordId, rentalId, newMessage });
+      console.error('Missing fields:', { userId, receiverId, rentalId, newMessage });
       return;
     }
-    // If contacting admin, include name and phone in the message
-    let messageToSend = newMessage;
-    let receiverId = landlordId;
-    let rentalIdToSend = rentalId;
-    // If admin is sending to a specific user, use otherUserId
-    if (otherUserId) {
-      receiverId = otherUserId;
-      rentalIdToSend = rentalId || null;
-    } else if (!rentalId && userName && userPhone) {
-      // If chatting with admin (no rentalId/landlordId), set receiverId to adminUserId prop and rentalId to null
-      messageToSend = `From: ${userName} (${userPhone})\n${newMessage}`;
-      receiverId = adminUserId || landlordId || 1; // fallback to 1 if not set
-      rentalIdToSend = null;
-    }
     if (!receiverId) {
-      return <div className="text-red-500">Unable to start chat: missing landlord information.</div>;
+      alert('Missing receiver information. Please try again later.');
+      console.error('Missing fields:', { userId, receiverId, rentalId, newMessage });
+      return;
     }
     try {
       const payload = {
