@@ -180,7 +180,7 @@ export default function ClientDashboard() {
                       height="h-40"
                     />
                     <div className="text-sm text-gray-700 mt-1">
-                      Location: Lat {rental.location.coordinates[1]}, Lng {rental.location.coordinates[0]}
+                      Location: Lat {rental.location.coordinates[0]}, Lng {rental.location.coordinates[1]}
                     </div>
                   </div>
                 )}

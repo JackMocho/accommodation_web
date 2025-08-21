@@ -64,10 +64,10 @@ export default function RentalDetail() {
     fetchClients();
   }, [rental, decoded, id]);
 
-  const [lat, setLat] = useState(rental?.location?.coordinates?.[1] || null);
-  const [lng, setLng] = useState(rental?.location?.coordinates?.[0] || null);
-
   if (!rental) return <div>Loading...</div>;
+
+  const lat = rental.location.coordinates[0];
+  const lng = rental.location.coordinates[1];
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -83,7 +83,18 @@ export default function RentalDetail() {
         ))}
       </div>
       <div className="mb-6 h-64 md:h-96 w-full">
-        <MapComponent rentals={[rental]} height="h-64 md:h-96" />
+        <MapComponent
+          rentals={[
+            {
+              ...rental,
+              location: {
+                ...rental.location,
+                coordinates: [lat, lng],
+              },
+            },
+          ]}
+          height="h-64"
+        />
       </div>
 
       {/* Rental Description & Info */}
