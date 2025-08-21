@@ -350,7 +350,7 @@ export default function AdminDashboard() {
         <table className="w-full table-auto bg-gray-800 rounded">
           <thead>
             <tr>
-              <th>Title</th><th>Town</th><th>Price</th><th>Status</th><th>Map</th><th>Action</th>
+              <th>Title</th><th>Town</th><th>Price</th><th>Status</th><th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -374,27 +374,7 @@ export default function AdminDashboard() {
                       : `KES ${r.price}/month`}
                   </td>
                   <td>{r.status}</td>
-                  <td>
-                    {r.location && Array.isArray(r.location.coordinates) && (
-                      <MapComponent
-                        rentals={[
-                          r.location && Array.isArray(r.location.coordinates)
-                            ? {
-                                ...r,
-                                location: {
-                                  ...r.location,
-                                  coordinates: [
-                                    r.location.coordinates[0], // lat
-                                    r.location.coordinates[1], // lng
-                                  ],
-                                },
-                              }
-                            : r
-                        ]}
-                        height="h-32"
-                      />
-                    )}
-                  </td>
+                 
                   <td>
                     <button onClick={() => handleDeleteRental(r.id)} className="bg-red-600 px-2 py-1 rounded">Delete</button>
                   </td>
