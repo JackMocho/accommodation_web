@@ -6,7 +6,7 @@ const supabase = require('../utils/supabaseClient');
 // Send message (new or reply)
 router.post('/send', async (req, res) => {
   const { sender_id, receiver_id, message, rental_id, parent_id } = req.body;
-  if (!sender_id || !receiver_id || !message) {
+  if (!sender_id || !receiver_id || !message || !rental_id) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   try {
@@ -14,14 +14,17 @@ router.post('/send', async (req, res) => {
       sender_id,
       receiver_id,
       message,
-      rental_id: rental_id || null,
+      rental_id,
       parent_id: parent_id || null
     }]);
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase insert error:', error); // <-- Add this line
+      throw error;
+    }
     res.json({ success: true });
   } catch (err) {
     logError(err, req);
-    res.status(500).json({ error: 'Failed to send message' });
+    res.status(500).json({ error: err.message || 'Failed to send message' }); // <-- Return real error
   }
 });
 
@@ -66,27 +69,22 @@ router.get('/messages/:rental_id', async (req, res) => {
 
 // Fetch recent messages for a user (inbox)
 router.get('/messages/recent/:userId', async (req, res) => {
-  const userId = req.params.userId;
-  if (!userId) {
-    return res.status(400).json({ error: 'User id required' });
-  }
+  const { userId } = req.params;
   try {
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select('*, rentals(title)')
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('created_at', { ascending: false });
-    if (error) {
-      console.error('Supabase error:', error);
-      return res.status(500).json({ error: error.message });
-    }
-    if (!data) {
-      return res.status(404).json({ error: 'No messages found' });
-    }
-    res.json(data);
+    if (error) throw error;
+    // Attach rental_title for each message
+    const messages = data.map(msg => ({
+      ...msg,
+      rental_title: msg.rentals?.title || msg.rental_id,
+    }));
+    res.json(messages);
   } catch (err) {
-    console.error('Chat fetch error:', err);
-    res.status(500).json({ error: err.message || 'Server error' });
+    res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
 

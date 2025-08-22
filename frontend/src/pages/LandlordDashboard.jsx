@@ -6,7 +6,6 @@ import NotificationBell from '../components/NotificationBell';
 import api from '../utils/api';
 import axios from 'axios';
 import MapComponent from '../components/MapComponent';
-import ChatInbox from '../components/ChatInbox';
 import Chat from '../components/Chat';
 import { useAuth } from '../context/AuthContext';
 
@@ -241,13 +240,6 @@ export default function LandlordDashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900">
-      {/* Chat Inbox for landlord */}
-      {user && (
-        <div className="mb-8">
-          <ChatInbox userId={user.id} />
-        </div>
-      )}
-
       <div className="mb-2">
         <h2 className="text-2xl font-bold">{welcomeMsg}</h2>
       </div>
@@ -313,71 +305,87 @@ export default function LandlordDashboard() {
 
       {/* Messages Tab */}
       {showMessages && (
-        <section className="mb-8 bg-blue-950 rounded shadow p-4">
-          <h3 className="text-xl font-semibold mb-4">Recent Messages</h3>
-          {messages.length === 0 ? (
-            <p className="text-gray-400">No recent messages.</p>
-          ) : (
-            <ul className="space-y-3">
-              {messages
-                .slice()
-                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                .map((msg, idx) => (
-                  <li key={idx} className="border-b border-red-700 pb-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-blue-300">
-                        {msg.sender_name || msg.sender_id}
-                        {msg.sender_email && (
-                          <span className="ml-2 text-yellow-300 text-xs">
-                            ({msg.sender_email})
+        <section className="mb-8 fixed inset-0 z-[1000] flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-80 z-[1000] pointer-events-auto"
+            onClick={() => setShowMessages(false)}
+          />
+          {/* Modal */}
+          <div className="relative bg-white rounded-lg shadow-2xl max-w-lg w-full mx-2 z-[1010] flex flex-col border border-blue-700">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
+              onClick={() => setShowMessages(false)}
+            >
+              &times;
+            </button>
+            <h3 className="text-xl font-semibold mb-4 mt-4 text-center">Recent Messages</h3>
+            <div className="p-4 overflow-y-auto max-h-[70vh]">
+              {messages.length === 0 ? (
+                <p className="text-gray-400">No recent messages.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {messages
+                    .slice()
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    .map((msg, idx) => (
+                      <li key={idx} className="border-b border-red-700 pb-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-blue-300">
+                            {msg.sender_name || msg.sender_id}
+                            {msg.sender_email && (
+                              <span className="ml-2 text-yellow-300 text-xs">
+                                ({msg.sender_email})
+                              </span>
+                            )}
+                            {" "}→ {msg.receiver_name || msg.receiver_id}
                           </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(msg.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-200 mt-1">{msg.message}</div>
+                        <div className="text-xs text-gray-400">
+                          Rental: <span className="font-semibold">{msg.rental_title || msg.title || msg.rental_id}</span>
+                        </div>
+                        <button
+                          className="mt-2 text-blue-400 hover:underline text-sm"
+                          onClick={() => {
+                            setReplyingTo(msg.id);
+                            setReplyText('');
+                          }}
+                        >
+                          Reply
+                        </button>
+                        {replyingTo === msg.id && (
+                          <div className="mt-2 flex gap-2">
+                            <input
+                              type="text"
+                              className="flex-1 rounded px-2 py-1 text-white"
+                              placeholder="Type your reply..."
+                              value={replyText}
+                              onChange={e => setReplyText(e.target.value)}
+                            />
+                            <button
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                              onClick={() => handleReply(msg)}
+                            >
+                              Send
+                            </button>
+                            <button
+                              className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded"
+                              onClick={() => setReplyingTo(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         )}
-                        {" "}→ {msg.receiver_name || msg.receiver_id}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {new Date(msg.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-200 mt-1">{msg.message}</div>
-                    <div className="text-xs text-gray-400">
-                      Rental ID: {msg.rental_id}
-                    </div>
-                    <button
-                      className="mt-2 text-blue-400 hover:underline text-sm"
-                      onClick={() => {
-                        setReplyingTo(msg.id);
-                        setReplyText('');
-                      }}
-                    >
-                      Reply
-                    </button>
-                    {replyingTo === msg.id && (
-                      <div className="mt-2 flex gap-2">
-                        <input
-                          type="text"
-                          className="flex-1 rounded px-2 py-1 text-white"
-                          placeholder="Type your reply..."
-                          value={replyText}
-                          onChange={e => setReplyText(e.target.value)}
-                        />
-                        <button
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                          onClick={() => handleReply(msg)}
-                        >
-                          Send
-                        </button>
-                        <button
-                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded"
-                          onClick={() => setReplyingTo(null)}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                  </li>
-                ))}
-            </ul>
-          )}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </section>
       )}
 
@@ -475,7 +483,7 @@ export default function LandlordDashboard() {
                         {u.lastMessage && new Date(u.lastMessage.created_at).toLocaleString()}
                       </div>
                       <div className="text-xs text-gray-400">
-                        Rental ID: {u.rentalId}
+                        Rental: <span className="font-semibold">{u.lastMessage?.rental_title || u.lastMessage?.title || u.rentalId}</span>
                       </div>
                     </li>
                   ))}
@@ -540,27 +548,6 @@ export default function LandlordDashboard() {
             </div>
           </div>
         </section>
-      )}
-      
-      {/* Chat Modal */}
-      {showChat && chatRental && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
-            <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
-              onClick={() => setShowChat(false)}
-            >
-              &times;
-            </button>
-            <Chat
-              rentalId={chatRental.id}
-              landlordId={user.id}
-              userName={user.full_name || user.name}
-              userPhone={user.phone}
-              otherUserId={chatClientId}
-            />
-          </div>
-        </div>
       )}
     </div>
   );

@@ -1,70 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 
-export default function Chat({ rentalId, receiverId, userName, userPhone, adminUserId, otherUserId }) {
+export default function Chat({ userId, rentalId, receiverId }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [hasSentFirst, setHasSentFirst] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Decode user from JWT token
-  const token = localStorage.getItem('token');
-  let decoded = null;
-  try {
-    decoded = token ? JSON.parse(atob(token.split('.')[1])) : null;
-  } catch {
-    decoded = null;
-  }
-  const userId = decoded?.id;
-  const isLandlord = userId === adminUserId;
-
-  // Fetch messages
-  const fetchMessages = async () => {
-    if (!rentalId || !userId) return;
-    setLoading(true);
-    try {
-      const res = await api.get(`/chat/messages/${rentalId}`);
-      setMessages(res.data);
-    } catch {
-      setMessages([]);
-    }
-    setLoading(false);
-  };
-
+  // Fetch messages for this rental and landlord
   useEffect(() => {
-    if (isLandlord || hasSentFirst) {
-      fetchMessages();
-    } else {
+    if (!rentalId || !userId || !receiverId) return;
+    const fetchMessages = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get(`/chat/messages/${rentalId}`);
+        setMessages(
+          res.data.filter(
+            msg =>
+              (msg.sender_id === userId && msg.receiver_id === receiverId) ||
+              (msg.sender_id === receiverId && msg.receiver_id === userId)
+          )
+        );
+      } catch {
+        setMessages([]);
+      }
       setLoading(false);
-    }
-    // eslint-disable-next-line
-  }, [rentalId, userId, isLandlord, hasSentFirst]);
+    };
+    fetchMessages();
+  }, [rentalId, userId, receiverId]);
 
   // Send message handler
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
-    if (!userId) {
-      alert('Missing user information. Please try again later.');
-      return;
-    }
-    if (!receiverId) {
-      alert('Missing receiver information. Please try again later.');
+    if (!userId || !receiverId || !rentalId) {
+      alert('Missing chat information. Please try again later.');
+      console.error('Missing fields:', { userId, receiverId, rentalId, newMessage });
       return;
     }
     try {
-      const payload = {
+      // Debug log
+      console.log('Sending:', {
         sender_id: userId,
         receiver_id: receiverId,
         message: newMessage,
         rental_id: rentalId,
-      };
-      await api.post('/chat/send', payload);
+      });
+      await api.post('/chat/send', {
+        sender_id: userId,
+        receiver_id: receiverId,
+        message: newMessage,
+        rental_id: rentalId,
+      });
       setNewMessage('');
-      setHasSentFirst(true);
-      fetchMessages(); // <-- Refresh messages after sending
+      // Refresh messages
+      const res = await api.get(`/chat/messages/${rentalId}`);
+      setMessages(
+        res.data.filter(
+          msg =>
+            (msg.sender_id === userId && msg.receiver_id === receiverId) ||
+            (msg.sender_id === receiverId && msg.receiver_id === userId)
+        )
+      );
     } catch (err) {
       alert('Failed to send message');
-      console.error(err);
+      console.error('Send message error:', err?.response?.data || err);
     }
   };
 
@@ -91,7 +89,7 @@ export default function Chat({ rentalId, receiverId, userName, userPhone, adminU
       <div className="flex space-x-2">
         <input
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={e => setNewMessage(e.target.value)}
           placeholder="Type your message..."
           className="flex-grow p-2 bg-gray-700 text-white rounded"
         />

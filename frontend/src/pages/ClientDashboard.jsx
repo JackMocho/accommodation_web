@@ -3,7 +3,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import MapComponent from '../components/MapComponent';
-import ChatInbox from '../components/ChatInbox';
 import Chat from '../components/Chat';
 import { useAuth } from '../context/AuthContext';
 
@@ -86,6 +85,10 @@ export default function ClientDashboard() {
   const [searchTown, setSearchTown] = useState('');
   const [showChat, setShowChat] = useState(false);
   const [chatRental, setChatRental] = useState(null);
+  const [showInbox, setShowInbox] = useState(false);
+  const [inboxMessages, setInboxMessages] = useState([]);
+  const [activeTab, setActiveTab] = useState('inbox'); // 'inbox' or 'reply'
+  const [replyThread, setReplyThread] = useState(null); // {rentalId, receiverId, rentalTitle}
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -119,12 +122,114 @@ export default function ClientDashboard() {
     r => r.location && Array.isArray(r.location.coordinates) && r.location.coordinates.length === 2
   );
 
+  // Fetch all messages for the user when inbox is opened
+  useEffect(() => {
+    if (showInbox && user?.id) {
+      api.get(`/chat/messages/recent/${user.id}`)
+        .then(res => setInboxMessages(res.data))
+        .catch(() => setInboxMessages([]));
+    }
+  }, [showInbox, user]);
+
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900 min-h-screen">
-      {/* Chat Inbox for client */}
+      {/* View Messages Button */}
       {user && (
-        <div className="mb-8">
-          <ChatInbox userId={user.id} />
+        <div className="mb-4 flex justify-end">
+          <button
+            className="bg-blue-700 text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition"
+            onClick={() => {
+              setShowInbox(true);
+              setActiveTab('inbox');
+              setReplyThread(null);
+            }}
+          >
+            View Messages
+          </button>
+        </div>
+      )}
+
+      {/* Inbox/Reply Modal */}
+      {showInbox && user && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-80 z-[1000] pointer-events-auto"
+            onClick={() => setShowInbox(false)}
+          />
+          {/* Modal */}
+          <div className="relative bg-white rounded-lg shadow-2xl max-w-lg w-full mx-2 z-[1010] flex flex-col border border-blue-700">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
+              onClick={() => setShowInbox(false)}
+            >
+              &times;
+            </button>
+            <div className="flex border-b border-gray-200">
+              <button
+                className={`flex-1 py-2 text-center font-semibold rounded-tl-lg ${activeTab === 'inbox' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-700'}`}
+                onClick={() => {
+                  setActiveTab('inbox');
+                  setReplyThread(null);
+                }}
+              >
+                Inbox
+              </button>
+              <button
+                className={`flex-1 py-2 text-center font-semibold rounded-tr-lg ${activeTab === 'reply' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-700'}`}
+                disabled={!replyThread}
+              >
+                Reply
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[70vh]">
+              {activeTab === 'inbox' && (
+                <>
+                  <h3 className="font-semibold mb-4 text-lg">Your Messages</h3>
+                  {inboxMessages.length === 0 ? (
+                    <p className="text-gray-500">No messages found.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {inboxMessages.map((msg, idx) => (
+                        <li
+                          key={idx}
+                          className="border-b border-gray-200 pb-2 cursor-pointer hover:bg-blue-50 rounded transition"
+                          onClick={() => {
+                            setReplyThread({
+                              rentalId: msg.rental_id,
+                              receiverId: msg.sender_id === user.id ? msg.receiver_id : msg.sender_id,
+                              rentalTitle: msg.rental_title || msg.title || msg.rental_id, // Prefer rental_title, then title, then id
+                            });
+                            setActiveTab('reply');
+                          }}
+                        >
+                          <div className="text-sm">
+                            <span className="font-bold">{msg.sender_id === user.id ? 'You' : 'Landlord'}:</span>{' '}
+                            {msg.message}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Rental: <span className="font-semibold">{msg.rental_title || msg.title || msg.rental_id}</span> | {new Date(msg.created_at).toLocaleString()}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+              {activeTab === 'reply' && replyThread && (
+                <div>
+                  <h3 className="font-semibold mb-2 text-lg">
+                    Chat for Rental: <span className="text-blue-700">{replyThread.rentalTitle}</span>
+                  </h3>
+                  <Chat
+                    userId={user.id}
+                    rentalId={replyThread.rentalId}
+                    receiverId={replyThread.receiverId}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -283,20 +388,27 @@ export default function ClientDashboard() {
       </div>
       {/* Chat Modal */}
       {showChat && chatRental && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-80 z-[1000] pointer-events-auto"
+            onClick={() => setShowChat(false)}
+          />
+          {/* Modal */}
+          <div className="relative bg-white rounded-lg shadow-2xl max-w-lg w-full mx-2 z-[1010] flex flex-col border border-blue-700">
             <button
               className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
               onClick={() => setShowChat(false)}
             >
               &times;
             </button>
+            <h3 className="font-semibold mb-2 text-lg text-blue-700 text-center">
+              Chat with Landlord for: <span className="text-black">{chatRental.title}</span>
+            </h3>
             <Chat
-              rentalId={chatRental.id}
               userId={user?.id}
-              receiverId={chatRental.landlord_id}
-              userName={user?.full_name || user?.name}
-              userPhone={user?.phone}
+              rentalId={chatRental?.id}
+              receiverId={chatRental?.landlord_id}
             />
           </div>
         </div>

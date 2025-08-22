@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import MapComponent from '../components/MapComponent';
-import ChatInbox from '../components/ChatInbox';
 import Chat from '../components/Chat';
 
 export default function AdminDashboard() {
@@ -212,7 +211,7 @@ export default function AdminDashboard() {
       {/* Chat Inbox for admin */}
       {user && (
         <div className="mb-8">
-          <ChatInbox userId={user.id} />
+          <Chat userId={user.id} adminUserId={user.id} />
         </div>
       )}
 
@@ -466,10 +465,7 @@ export default function AdminDashboard() {
               &times;
             </button>
             <Chat
-              landlordId={user.id}
-              userName={user.full_name || user.name}
-              userPhone={user.phone}
-              otherUserId={chatUserId}
+              userId={user.id}
               adminUserId={user.id}
             />
           </div>
