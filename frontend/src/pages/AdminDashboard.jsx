@@ -208,12 +208,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-800 to-purple-900 text-white">
-      {/* Chat Inbox for admin */}
-      {user && (
-        <div className="mb-8">
-          <Chat userId={user.id} adminUserId={user.id} />
-        </div>
-      )}
+      
 
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
       {error && <div className="bg-red-700 text-white p-2 rounded mb-4">{error}</div>}
