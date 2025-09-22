@@ -1,96 +1,65 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../utils/supabaseClient');
-const jwt = require('jsonwebtoken');
+const db = require('../utils/supabaseClient');
+const jwtUtils = require('../utils/jwtUtils');
+const encrypt = require('../utils/encryptData');
 
 // Register User (using Supabase Auth)
 router.post('/register', async (req, res) => {
-  const { email, password, full_name, phone, role, town, latitude, longitude } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
-  }
   try {
-    const { data, error } = await supabase
-      .from('users')
-      .insert([
-        {
-          email,
-          password,
-          full_name,
-          phone,
-          role,
-          town,
-          latitude,
-          longitude,
-          suspended: false,
-          superuser: false,
-          approved: false
-        }
-      ])
-      .select(); // <-- Add this to get the inserted row
+    const { email, password, full_name, phone, name, town } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-    if (error) return res.status(500).json({ error: error.message });
-    if (!data || data.length === 0) return res.status(500).json({ error: 'User registration failed' });
-    res.json({ success: true, user: data[0] });
+    const existing = await db.findOne('users', { email });
+    if (existing) return res.status(409).json({ error: 'User already exists' });
+
+    let storedPassword = password;
+    if (encrypt && encrypt.hash) {
+      storedPassword = await encrypt.hash(password);
+    }
+
+    const newUser = await db.insert('users', {
+      email,
+      password: storedPassword,
+      full_name,
+      name,
+      phone,
+      town,
+      approved: false,
+      role: 'client'
+    });
+
+    const token = jwtUtils.generateToken({ id: newUser.id, email: newUser.email, role: newUser.role });
+
+    res.json({ user: newUser, token });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message || 'Server error' });
+    console.error('Register error', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Login using Supabase Auth
 router.post('/login', async (req, res) => {
-  const { email, phone, password } = req.body;
-  if ((!email && !phone) || !password) {
-    return res.status(400).json({ error: 'Email or phone and password are required' });
-  }
-
   try {
-    // Find user by email or phone
-    let userQuery;
-    if (email) {
-      userQuery = supabase.from('users').select('*').eq('email', email);
+    const { email, password } = req.body;
+    const user = await db.findOne('users', { email });
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+    let match = false;
+    if (encrypt && encrypt.compare) {
+      match = await encrypt.compare(password, user.password);
     } else {
-      userQuery = supabase.from('users').select('*').eq('phone', phone);
+      match = password === user.password;
     }
-    const { data: users, error } = await userQuery;
-    if (error || !users || users.length === 0) {
-      return res.status(401).json({ error: 'User not found' });
-    }
-    const user = users[0];
+    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
-    // Compare plain text password
-    if (user.password !== password) {
-      return res.status(401).json({ error: 'Invalid password' });
-    }
+    const token = jwtUtils.generateToken({ id: user.id, email: user.email, role: user.role });
 
-    // Create JWT
-    const token = jwt.sign(
-      { id: user.id, email: user.email, phone: user.phone },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
     res.json({ user, token });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Login failed' });
+    console.error('Login error', err);
+    res.status(500).json({ error: 'Server error' });
   }
-});
-
-// Legacy registration (plain text password, not recommended for production)
-router.post('/legacy-register', async (req, res) => {
-  const { name, email, password, phone } = req.body;
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-  const { data, error } = await supabase
-    .from('users')
-    .insert([{ name, email, password, phone }])
-    .select();
-  if (error) return res.status(500).json({ error: error.message });
-  // Optionally, create a JWT and return it
-  const token = jwt.sign({ id: data[0].id, email: data[0].email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  res.json({ user: data[0], token });
 });
 
 module.exports = router;

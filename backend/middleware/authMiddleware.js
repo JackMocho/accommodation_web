@@ -2,6 +2,8 @@
 
 const jwt = require('jsonwebtoken');
 const supabase = require('../utils/supabaseClient');
+const db = require('../utils/supabaseClient');
+const jwtUtils = require('../utils/jwtUtils');
 
 // Auth middleware using Supabase JWT
 const protect = async (req, res, next) => {
@@ -14,14 +16,11 @@ const protect = async (req, res, next) => {
     // Verify JWT using your secret
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // Fetch user from DB to get role
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', decoded.id);
-    if (error || !users || users.length === 0) {
+    const user = await db.findOne('users', { id: decoded.id });
+    if (!user || !user.id) {
       return res.status(401).json({ error: 'User not found' });
     }
-    req.user = users[0]; // Attach full user object including role
+    req.user = user; // Attach full user object including role
     next();
   } catch (err) {
     res.status(401).json({ error: 'Token is not valid' });
@@ -36,7 +35,40 @@ const isAdmin = (req, res, next) => {
   return res.status(401).json({ error: 'Not authorized as admin' });
 };
 
+// Custom authentication middleware
+async function authenticate(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    const payload = await jwtUtils.verifyToken(token);
+    if (!payload || !payload.id) return res.status(401).json({ error: 'Invalid token' });
+
+    const user = await db.findOne('users', { id: payload.id }, '*');
+    if (!user) return res.status(401).json({ error: 'User not found' });
+    if (user.suspended) return res.status(403).json({ error: 'Account suspended' });
+    if (!user.approved) req.user = user; // allow non-approved users to proceed in some flows if needed
+    req.user = user;
+    next();
+  } catch (err) {
+    console.error('Auth middleware error:', err);
+    return res.status(401).json({ error: 'Authentication failed' });
+  }
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!roles.includes(user.role)) return res.status(403).json({ error: 'Insufficient permissions' });
+    next();
+  };
+}
+
 module.exports = {
   protect,
   isAdmin,
+  authenticate,
+  requireRole,
 };

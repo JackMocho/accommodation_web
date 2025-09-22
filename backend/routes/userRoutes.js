@@ -1,45 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../utils/supabaseClient');
-const { protect } = require('../middleware/authMiddleware');
+const db = require('../utils/supabaseClient');
+const { authenticate } = require('../middleware/authMiddleware');
 
-// Get all users
-router.get('/', protect, async (req, res) => {
+// get profile
+router.get('/me', authenticate, async (req, res) => {
+  res.json(req.user);
+});
+
+// update profile
+router.put('/me', authenticate, async (req, res) => {
   try {
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    res.json(users);
+    const allowed = ['full_name', 'name', 'town', 'phone', 'latitude', 'longitude'];
+    const data = {};
+    allowed.forEach(k => { if (req.body[k] !== undefined) data[k] = req.body[k]; });
+    if (Object.keys(data).length === 0) return res.status(400).json({ error: 'No valid fields' });
+    const updated = await db.update('users', { id: req.user.id }, data);
+    res.json(updated[0]);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch users.' });
+    console.error('Update profile error', err);
+    res.status(500).json({ error: 'Server error' });
   }
-});
-
-// Get user profile by id
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', id)
-    .single();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
-
-// Update user profile
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const updates = req.body;
-  const { data, error } = await supabase
-    .from('users')
-    .update(updates)
-    .eq('id', id)
-    .select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
 });
 
 module.exports = router;

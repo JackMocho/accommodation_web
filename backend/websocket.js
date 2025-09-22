@@ -1,40 +1,30 @@
 const WebSocket = require('ws');
-const supabase = require('./utils/supabaseClient');
+const db = require('./utils/supabaseClient');
 
-function setupWebSocket(server) {
+// simple example: save incoming messages
+function initWebsocket(server) {
   const wss = new WebSocket.Server({ server });
 
   wss.on('connection', (ws) => {
-    ws.on('message', async (message) => {
+    ws.on('message', async (raw) => {
       try {
-        const data = JSON.parse(message.toString());
-
-        if (data.type === 'SEND_MESSAGE') {
-          // Save to Supabase
-          const { error } = await supabase.from('messages').insert([{
-            sender_id: data.sender_id,
-            receiver_id: data.receiver_id,
-            rental_id: data.rental_id,
-            message: data.message,
-            created_at: new Date().toISOString()
-          }]);
-          if (error) {
-            console.error('Supabase insert error:', error.message);
-            return;
-          }
-
-          // Broadcast to receiver
-          wss.clients.forEach((client) => {
-            if (client.id === data.receiver_id && client.readyState === WebSocket.OPEN) {
-              client.send(message);
-            }
+        const msg = JSON.parse(raw);
+        // expect { action: 'message', data: { sender_id, receiver_id, message, rental_id } }
+        if (msg.action === 'message' && msg.data) {
+          const { sender_id, receiver_id, message, rental_id } = msg.data;
+          const saved = await db.insert('messages', { sender_id, receiver_id, rental_id: rental_id || null, message });
+          // broadcast to all
+          wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify({ type: 'new_message', message: saved }));
           });
         }
       } catch (err) {
-        console.error('Message failed:', err.message);
+        console.error('WebSocket message error', err);
       }
     });
   });
+
+  return wss;
 }
 
-module.exports = setupWebSocket;
+module.exports = initWebsocket;

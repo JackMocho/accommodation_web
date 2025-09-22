@@ -1,69 +1,45 @@
 const cors = require('cors');
-require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = [
-  'https://accommodation-web-pyz9.onrender.com',
-  'https://accommodation-web.onrender.com',
-  'http://localhost:5173'
-];
+// enable CORS for frontend origin(s)
+const allowedOrigin = process.env.FRONTEND_ORIGIN || '*';
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: allowedOrigin,
   credentials: true,
 }));
-app.use(express.json({ limit: '30mb' })); // Increased JSON body size limit
-app.use(express.urlencoded({ limit: '30mb', extended: true })); // Increased URL-encoded body size limit
 
-// Mount routes
-const adminRoutes = require('./routes/adminRoutes');
-app.use('/api/admin', adminRoutes);
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
+// serve uploaded files (if frontend expects /uploads/*)
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// mount routes (ensure these files exist)
 const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
-
 const rentalRoutes = require('./routes/rentalRoutes');
-app.use('/api/rentals', rentalRoutes);
-
+const chatRoutes = require('./routes/chatRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const userRoutes = require('./routes/userRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/rentals', rentalRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/stats', statsRoutes);
 
-const chatRoutes = require('./routes/chatRoutes');
-app.use('/api/chat', chatRoutes);
-
-const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes);
-
-// CORS-enabled 404 handler (should be after all routes)
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', [
-    'https://accommodation-web-pyz9.onrender.com',
-    'https://accommodation-web.onrender.com',
-    'http://localhost:5173'
-  ]);
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  res.status(404).json({ error: 'Not found' });
-});
-
-// Setup WebSockets
-const setupWebSocket = require('./websocket');
-setupWebSocket(server); // ✅ Now this works
+// websockets (websocket.js exports initializer that accepts server)
+const initWebsocket = require('./websocket');
+initWebsocket(server);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });

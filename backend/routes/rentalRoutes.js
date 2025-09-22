@@ -1,261 +1,89 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../utils/supabaseClient');
+const db = require('../utils/supabaseClient');
+const { authenticate, requireRole } = require('../middleware/authMiddleware');
 
-// Submit new rental
-router.post('/submit', async (req, res) => {
+// Create rental
+router.post('/', authenticate, requireRole('landlord', 'admin'), async (req, res) => {
   try {
-    const {
-      title,
-      description,
-      price,
-      nightly_price,
-      mode,
-      type,
-      status,
-      images,
-      latitude,
-      longitude,
-      location, // <-- use this
-      town,
-      user_id,
-      landlord_id,
-    } = req.body;
-
-    const finalLandlordId = landlord_id || user_id;
-
-    if (!title || !mode || !type || !finalLandlordId) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    let lat = latitude, lng = longitude;
-    if ((!lat || !lng) && location && Array.isArray(location.coordinates)) {
-      lat = location.coordinates[0];
-      lng = location.coordinates[1];
-    }
-
-    // Prepare geometry for PostGIS (WKT)
-    let geom = null;
-    if (lat && lng) {
-      geom = `SRID=4326;POINT(${lng} ${lat})`;
-    }
-
-    const monthlyPrice = Number(price) || 0;
-    const nightlyPrice = Number(nightly_price) || 0;
-
-    // Insert into DB (assuming Supabase supports WKT for geometry)
-    const { data, error } = await supabase
-      .from('rentals')
-      .insert([
-        {
-          title,
-          description,
-          price: monthlyPrice,
-          nightly_price: nightlyPrice,
-          mode,
-          type,
-          status: status || 'available',
-          images,
-          latitude: lat,
-          longitude: lng,
-          location, // JSON object
-          geom,
-          town,
-          landlord_id: finalLandlordId,
-          user_id: finalLandlordId,
-        }
-      ])
-      .select();
-
-    if (error) {
-      console.error('Supabase error:', error);
-      return res.status(500).json({ error: error.message });
-    }
-    res.json({ success: true, rental: data[0] });
+    const payload = { ...req.body, landlord_id: req.user.id };
+    const inserted = await db.insert('rentals', payload);
+    res.json(inserted);
   } catch (err) {
-    console.error('Rental submit error:', err);
-    res.status(500).json({ error: err.message || 'Server error' });
-  }
-});
-
-// Get all rentals (admin only)
-router.get('/all', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('rentals')
-      .select('*, users!inner(id, full_name, phone, role, approved)')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    // Add landlord_name for compatibility
-    const rentals = data.map(r => ({
-      ...r,
-      landlord_name: r.users?.full_name || null
-    }));
-    res.json(rentals);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch rentals' });
-  }
-});
-
-// Get rentals for the logged-in user
-router.get('/user/:user_id', async (req, res) => {
-  const { user_id } = req.params;
-  try {
-    const { data, error } = await supabase
-      .from('rentals')
-      .select('*')
-      .eq('user_id', user_id)
-      .in('status', ['available', 'booked'])
-      .in('mode', ['rental', 'lodging', 'airbnb'])
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch rentals' });
-  }
-});
-
-// Get all rentals (public)
-router.get('/', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('rentals')
-      .select('*, users!inner(id, full_name, phone, role, approved)')
-      .eq('status', 'available');
-    if (error) throw error;
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch rentals' });
-  }
-});
-
-// Nearby rentals
-router.get('/nearby', async (req, res) => {
-  const { lat, lng, distance } = req.query;
-  if (!lat || !lng) {
-    return res.status(400).json({ error: 'lat and lng required' });
-  }
-  // Supabase/Postgres doesn't support geospatial queries via JS client directly.
-  // You may need to use a Postgres function or filter in JS for now.
-  // Here, we fetch all and filter in JS (not efficient for large datasets).
-  const dist = distance || 5; // default 5km
-  try {
-    const { data, error } = await supabase
-      .from('rentals')
-      .select('*, users!inner(full_name, role, approved)')
-      .eq('status', 'available')
-      .eq('users.role', 'landlord')
-      .eq('users.approved', true)
-      .in('mode', ['rental', 'lodging', 'airbnb']);
-    if (error) throw error;
-    // Filter by distance in JS (Haversine formula)
-    const toRad = x => (x * Math.PI) / 180;
-    const R = 6371; // km
-    const filtered = data.filter(r => {
-      if (!r.latitude || !r.longitude) return false;
-      const dLat = toRad(r.latitude - lat);
-      const dLon = toRad(r.longitude - lng);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat)) *
-          Math.cos(toRad(r.latitude)) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const d = R * c;
-      return d <= dist;
-    });
-    res.json(filtered);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch nearby rentals' });
-  }
-});
-
-// Rentals in a specified town
-router.get('/town/:town', async (req, res) => {
-  const { town } = req.params;
-  try {
-    const { data, error } = await supabase
-      .from('rentals')
-      .select('*, users!inner(full_name, role, approved)')
-      .eq('status', 'available')
-      .eq('users.role', 'landlord')
-      .eq('users.approved', true)
-      .ilike('town', town)
-      .in('mode', ['rental', 'lodging', 'airbnb'])
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    const rentals = data.map(r => ({
-      ...r,
-      landlord_name: r.users?.full_name || null
-    }));
-    res.json(rentals);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch rentals by town' });
-  }
-});
-
-// Update a rental
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const updates = req.body;
-  const { data, error } = await supabase.from('rentals').update(updates).eq('id', id).select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
-});
-
-// Delete a rental
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { error } = await supabase.from('rentals').delete().eq('id', id);
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(204).send();
-});
-
-// Get rentals for a specific user (expects user id in query or JWT)
-router.get('/user', async (req, res) => {
-  const userId = req.query.id;
-  if (!userId) {
-    return res.status(400).json({ error: 'User id required' });
-  }
-  const { data, error } = await supabase.from('rentals').select('*').eq('user_id', userId);
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
-
-// Book or unbook a rental (toggle status)
-router.put('/:id/book', async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  if (!['booked', 'available'].includes(status)) {
-    return res.status(400).json({ error: 'Invalid status' });
-  }
-  try {
-    const { data, error } = await supabase
-      .from('rentals')
-      .update({ status })
-      .eq('id', id)
-      .select();
-    if (error) return res.status(500).json({ error: error.message });
-    if (!data || data.length === 0) return res.status(404).json({ error: 'Rental not found' });
-    res.json(data[0]);
-  } catch (err) {
+    console.error('Create rental error', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Get a single rental by ID
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
+// Get rentals (optionally by id)
+router.get('/:id?', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('rentals')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) return res.status(404).json({ error: 'Rental not found' });
-    res.json(data);
+    const { id } = req.params;
+    if (id) {
+      const rental = await db.findOne('rentals', { id });
+      if (!rental) return res.status(404).json({ error: 'Not found' });
+      return res.json(rental);
+    }
+    // list with optional query params: town, landlord_id, mode, approved
+    const conditions = {};
+    ['town', 'landlord_id', 'mode', 'approved', 'status'].forEach(k => {
+      if (req.query[k] !== undefined) conditions[k] = req.query[k];
+    });
+    const rows = Object.keys(conditions).length ? await db.findBy('rentals', conditions) : (await db.query('SELECT * FROM rentals ORDER BY created_at DESC;')).rows;
+    res.json(rows);
   } catch (err) {
+    console.error('Get rentals error', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update rental
+router.put('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rental = await db.findOne('rentals', { id });
+    if (!rental) return res.status(404).json({ error: 'Not found' });
+    // only landlord or admin can update
+    if (rental.landlord_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    const updated = await db.update('rentals', { id }, req.body);
+    res.json(updated[0]);
+  } catch (err) {
+    console.error('Update rental error', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete rental
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rental = await db.findOne('rentals', { id });
+    if (!rental) return res.status(404).json({ error: 'Not found' });
+    if (rental.landlord_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    const deleted = await db.del('rentals', { id });
+    res.json(deleted[0]);
+  } catch (err) {
+    console.error('Delete rental error', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Nearby search using PostGIS: expects lat & lng and radius (meters)
+router.get('/nearby/search', async (req, res) => {
+  try {
+    const { lat, lng, radius = 5000 } = req.query;
+    if (!lat || !lng) return res.status(400).json({ error: 'lat & lng required' });
+    const sql = `
+      SELECT *, ST_DistanceSphere(geom, ST_SetSRID(ST_MakePoint($1, $2), 4326)) AS distance_m
+      FROM rentals
+      WHERE geom IS NOT NULL AND ST_DWithin(geom, ST_SetSRID(ST_MakePoint($1, $2), 4326), $3)
+      ORDER BY distance_m ASC
+      LIMIT 200;
+    `;
+    const rows = (await db.query(sql, [parseFloat(lng), parseFloat(lat), parseFloat(radius)])).rows;
+    res.json(rows);
+  } catch (err) {
+    console.error('Nearby search error', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
