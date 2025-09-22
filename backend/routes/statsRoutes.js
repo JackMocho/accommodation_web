@@ -5,14 +5,10 @@ const { authenticate, requireRole } = require('../middleware/authMiddleware');
 
 router.get('/overview', authenticate, requireRole('admin'), async (req, res) => {
   try {
-    const totals = {};
-    const users = (await db.query('SELECT COUNT(*) AS count FROM users;')).rows[0].count;
-    const rentals = (await db.query('SELECT COUNT(*) AS count FROM rentals;')).rows[0].count;
-    const messages = (await db.query('SELECT COUNT(*) AS count FROM messages;')).rows[0].count;
-    totals.users = parseInt(users, 10);
-    totals.rentals = parseInt(rentals, 10);
-    totals.messages = parseInt(messages, 10);
-    res.json(totals);
+    const usersCount = (await db.query('SELECT COUNT(*)::int AS count FROM users;')).rows[0].count;
+    const rentalsCount = (await db.query('SELECT COUNT(*)::int AS count FROM rentals;')).rows[0].count;
+    const messagesCount = (await db.query('SELECT COUNT(*)::int AS count FROM messages;')).rows[0].count;
+    res.json({ users: usersCount, rentals: rentalsCount, messages: messagesCount });
   } catch (err) {
     console.error('Stats overview error', err);
     res.status(500).json({ error: 'Server error' });

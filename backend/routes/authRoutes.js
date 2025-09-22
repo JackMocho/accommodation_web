@@ -14,9 +14,7 @@ router.post('/register', async (req, res) => {
     if (existing) return res.status(409).json({ error: 'User already exists' });
 
     let storedPassword = password;
-    if (encrypt && encrypt.hash) {
-      storedPassword = await encrypt.hash(password);
-    }
+    if (encrypt && encrypt.hash) storedPassword = await encrypt.hash(password);
 
     const newUser = await db.insert('users', {
       email,
@@ -42,19 +40,18 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
     const user = await db.findOne('users', { email });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
     let match = false;
-    if (encrypt && encrypt.compare) {
-      match = await encrypt.compare(password, user.password);
-    } else {
-      match = password === user.password;
-    }
+    if (encrypt && encrypt.compare) match = await encrypt.compare(password, user.password);
+    else match = password === user.password;
+
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwtUtils.generateToken({ id: user.id, email: user.email, role: user.role });
-
     res.json({ user, token });
   } catch (err) {
     console.error('Login error', err);

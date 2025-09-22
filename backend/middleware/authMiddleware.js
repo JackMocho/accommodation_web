@@ -38,17 +38,17 @@ const isAdmin = (req, res, next) => {
 // Custom authentication middleware
 async function authenticate(req, res, next) {
   try {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.replace('Bearer ', '').trim();
+    const header = req.headers.authorization || '';
+    const token = header.replace('Bearer ', '').trim();
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const payload = await jwtUtils.verifyToken(token);
     if (!payload || !payload.id) return res.status(401).json({ error: 'Invalid token' });
 
-    const user = await db.findOne('users', { id: payload.id }, '*');
+    const user = await db.findOne('users', { id: payload.id });
     if (!user) return res.status(401).json({ error: 'User not found' });
     if (user.suspended) return res.status(403).json({ error: 'Account suspended' });
-    if (!user.approved) req.user = user; // allow non-approved users to proceed in some flows if needed
+
     req.user = user;
     next();
   } catch (err) {

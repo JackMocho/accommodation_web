@@ -16,8 +16,12 @@ export default function HomePage() {
     const fetchStats = async () => {
       try {
         const res = await api.get('/stats/counts');
-        setStats(res.data); // { rentals: 0, users: 2 }
-      } catch (err) {}
+        // guard against undefined response shape
+        setStats(res?.data ?? { users: 0, rentals: 0 });
+      } catch (err) {
+        console.error('Fetch stats error', err);
+        // preserve defaults on error
+      }
     };
     fetchStats();
   }, []);
@@ -132,9 +136,9 @@ export default function HomePage() {
       {/* Stats Section */}
       <section className="py-14 px-4 bg-gradient-to-t from-blue-800 via-blue-700 to-purple-400">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <StatCard label="Total Users" value={stats.users} />
-          <StatCard label="Total Rentals" value={stats.rentals} />
-          <StatCard label="Active Listings" value={stats.rentals} />
+          <StatCard label="Total Users" value={stats?.users ?? 0} />
+          <StatCard label="Total Rentals" value={stats?.rentals ?? 0} />
+          <StatCard label="Active Listings" value={stats?.rentals ?? 0} />
         </div>
       </section>
 

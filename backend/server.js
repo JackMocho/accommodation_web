@@ -7,20 +7,42 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const app = express();
 const server = http.createServer(app);
 
-// enable CORS for frontend origin(s)
-const allowedOrigin = process.env.FRONTEND_ORIGIN || '*';
+// Defensive patch: prevent mounting full URLs or strings with '?' as route paths.
+// This helps surface the exact file/line that tries to use a full URL as a route.
+const originalAppUse = app.use.bind(app);
+app.use = function (firstArg, ...rest) {
+  if (typeof firstArg === 'string' && (firstArg.startsWith('http://') || firstArg.startsWith('https://') || firstArg.includes('?'))) {
+    console.error(`Invalid app.use() mount path detected: ${firstArg}`);
+    throw new Error(`Invalid mount path for app.use(): "${firstArg}". Use a path starting with '/' (no protocol, host, or query string).`);
+  }
+  return originalAppUse(firstArg, ...rest);
+};
+
+// Patch Router.prototype.use to catch router.use(...) mistakes too
+const expressRouter = require('express').Router;
+const origRouterUse = expressRouter.prototype.use;
+expressRouter.prototype.use = function (firstArg, ...rest) {
+  if (typeof firstArg === 'string' && (firstArg.startsWith('http://') || firstArg.startsWith('https://') || firstArg.includes('?'))) {
+    console.error(`Invalid router.use() mount path detected: ${firstArg}`);
+    throw new Error(`Invalid mount path for router.use(): "${firstArg}". Use a path starting with '/' (no protocol, host, or query string).`);
+  }
+  return origRouterUse.call(this, firstArg, ...rest);
+};
+
+// CORS: allow a full origin string via env (e.g. https://app.example.com) but do NOT use it as a mount path.
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || '*';
 app.use(cors({
-  origin: allowedOrigin,
+  origin: FRONTEND_ORIGIN,
   credentials: true,
 }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// serve uploaded files (if frontend expects /uploads/*)
+// Serve uploads/static if needed
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-// mount routes (ensure these files exist)
+// Mount routes using path strings only (no full URLs)
 const authRoutes = require('./routes/authRoutes');
 const rentalRoutes = require('./routes/rentalRoutes');
 const chatRoutes = require('./routes/chatRoutes');
@@ -35,7 +57,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stats', statsRoutes);
 
-// websockets (websocket.js exports initializer that accepts server)
+// WebSocket initializer accepts the http server
 const initWebsocket = require('./websocket');
 initWebsocket(server);
 

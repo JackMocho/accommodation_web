@@ -8,8 +8,8 @@ router.use(authenticate, requireRole('admin'));
 // list users
 router.get('/users', async (req, res) => {
   try {
-    const rows = await db.query('SELECT id, email, full_name, role, approved, suspended, created_at FROM users ORDER BY created_at DESC;');
-    res.json(rows.rows);
+    const rows = (await db.query('SELECT id, email, full_name, role, approved, suspended, created_at FROM users ORDER BY created_at DESC;')).rows;
+    res.json(rows);
   } catch (err) {
     console.error('Admin list users error', err);
     res.status(500).json({ error: 'Server error' });

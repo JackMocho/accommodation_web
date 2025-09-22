@@ -3,33 +3,36 @@ const router = express.Router();
 const db = require('../utils/supabaseClient');
 const { authenticate, requireRole } = require('../middleware/authMiddleware');
 
-// Create rental
+// create rental
 router.post('/', authenticate, requireRole('landlord', 'admin'), async (req, res) => {
   try {
     const payload = { ...req.body, landlord_id: req.user.id };
-    const inserted = await db.insert('rentals', payload);
-    res.json(inserted);
+    const created = await db.insert('rentals', payload);
+    res.json(created);
   } catch (err) {
     console.error('Create rental error', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Get rentals (optionally by id)
-router.get('/:id?', async (req, res) => {
+// get list (with optional filters & safe sort)
+router.get('/', async (req, res) => {
   try {
-    const { id } = req.params;
-    if (id) {
-      const rental = await db.findOne('rentals', { id });
-      if (!rental) return res.status(404).json({ error: 'Not found' });
-      return res.json(rental);
-    }
-    // list with optional query params: town, landlord_id, mode, approved
-    const conditions = {};
+    const filters = {};
     ['town', 'landlord_id', 'mode', 'approved', 'status'].forEach(k => {
-      if (req.query[k] !== undefined) conditions[k] = req.query[k];
+      if (req.query[k] !== undefined) filters[k] = req.query[k];
     });
-    const rows = Object.keys(conditions).length ? await db.findBy('rentals', conditions) : (await db.query('SELECT * FROM rentals ORDER BY created_at DESC;')).rows;
+
+    let rows;
+    if (Object.keys(filters).length) {
+      rows = await db.findBy('rentals', filters);
+    } else {
+      // only allow a small whitelist of sortable columns to avoid SQL injection
+      const allowedSort = new Set(['created_at', 'price']);
+      const sort = allowedSort.has(req.query.sort) ? req.query.sort : 'created_at';
+      rows = (await db.query(`SELECT * FROM rentals ORDER BY ${sort} DESC;`)).rows;
+    }
+
     res.json(rows);
   } catch (err) {
     console.error('Get rentals error', err);
@@ -37,38 +40,7 @@ router.get('/:id?', async (req, res) => {
   }
 });
 
-// Update rental
-router.put('/:id', authenticate, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const rental = await db.findOne('rentals', { id });
-    if (!rental) return res.status(404).json({ error: 'Not found' });
-    // only landlord or admin can update
-    if (rental.landlord_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-    const updated = await db.update('rentals', { id }, req.body);
-    res.json(updated[0]);
-  } catch (err) {
-    console.error('Update rental error', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Delete rental
-router.delete('/:id', authenticate, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const rental = await db.findOne('rentals', { id });
-    if (!rental) return res.status(404).json({ error: 'Not found' });
-    if (rental.landlord_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-    const deleted = await db.del('rentals', { id });
-    res.json(deleted[0]);
-  } catch (err) {
-    console.error('Delete rental error', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Nearby search using PostGIS: expects lat & lng and radius (meters)
+// nearby search (lat,lng, radius meters) - keep before :id route
 router.get('/nearby/search', async (req, res) => {
   try {
     const { lat, lng, radius = 5000 } = req.query;
@@ -84,6 +56,49 @@ router.get('/nearby/search', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('Nearby search error', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// get by id
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rental = await db.findOne('rentals', { id });
+    if (!rental) return res.status(404).json({ error: 'Not found' });
+    return res.json(rental);
+  } catch (err) {
+    console.error('Get rental by id error', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// update rental
+router.put('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rental = await db.findOne('rentals', { id });
+    if (!rental) return res.status(404).json({ error: 'Not found' });
+    if (rental.landlord_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    const updated = await db.update('rentals', { id }, req.body);
+    res.json(updated[0]);
+  } catch (err) {
+    console.error('Update rental error', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// delete rental
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rental = await db.findOne('rentals', { id });
+    if (!rental) return res.status(404).json({ error: 'Not found' });
+    if (rental.landlord_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    const deleted = await db.del('rentals', { id });
+    res.json(deleted[0]);
+  } catch (err) {
+    console.error('Delete rental error', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

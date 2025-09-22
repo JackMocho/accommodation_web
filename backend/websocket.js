@@ -1,7 +1,6 @@
 const WebSocket = require('ws');
 const db = require('./utils/supabaseClient');
 
-// simple example: save incoming messages
 function initWebsocket(server) {
   const wss = new WebSocket.Server({ server });
 
@@ -9,13 +8,19 @@ function initWebsocket(server) {
     ws.on('message', async (raw) => {
       try {
         const msg = JSON.parse(raw);
-        // expect { action: 'message', data: { sender_id, receiver_id, message, rental_id } }
         if (msg.action === 'message' && msg.data) {
-          const { sender_id, receiver_id, message, rental_id } = msg.data;
-          const saved = await db.insert('messages', { sender_id, receiver_id, rental_id: rental_id || null, message });
-          // broadcast to all
+          const { sender_id, receiver_id, rental_id, message, parent_id } = msg.data;
+          const saved = await db.insert('messages', {
+            sender_id,
+            receiver_id,
+            rental_id: rental_id || null,
+            parent_id: parent_id || null,
+            message
+          });
+          // broadcast
+          const payload = JSON.stringify({ type: 'new_message', message: saved });
           wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify({ type: 'new_message', message: saved }));
+            if (client.readyState === WebSocket.OPEN) client.send(payload);
           });
         }
       } catch (err) {
