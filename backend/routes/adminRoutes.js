@@ -1,9 +1,8 @@
 const express = require('express');
-const router = express.Router();
-const db = require('../utils/supabaseClient');
+const db = require('../config/db');
 const { authenticate, requireRole } = require('../middleware/authMiddleware');
 
-router.use(authenticate, requireRole('admin'));
+const router = express.Router();
 
 // list users
 router.get('/users', async (req, res) => {
@@ -17,7 +16,7 @@ router.get('/users', async (req, res) => {
 });
 
 // approve user
-router.post('/users/:id/approve', async (req, res) => {
+router.post('/users/:id/approve', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const updated = await db.update('users', { id }, { approved: true });
@@ -29,15 +28,26 @@ router.post('/users/:id/approve', async (req, res) => {
 });
 
 // suspend user
-router.post('/users/:id/suspend', async (req, res) => {
+router.post('/users/:id/suspend', authenticate, requireRole('admin'), async (req, res) => {
   try {
-    const { id } = req.params;
-    const { suspended = true } = req.body;
-    const updated = await db.update('users', { id }, { suspended });
-    res.json(updated[0]);
+    const userId = req.params.id;
+    const { suspended } = req.body;
+    const updated = await db.update('users', { id: userId }, { suspended: !!suspended }, '*');
+    res.json(updated[0] || null);
   } catch (err) {
-    console.error('Suspend user error', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// Delete user
+router.delete('/users/:id', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const deleted = await db.del('users', { id: req.params.id });
+    res.json(deleted[0] || null);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete user' });
   }
 });
 

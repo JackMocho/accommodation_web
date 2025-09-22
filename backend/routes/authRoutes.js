@@ -1,59 +1,45 @@
 const express = require('express');
-const router = express.Router();
-const db = require('../utils/supabaseClient');
+const bcrypt = require('bcryptjs');
+const db = require('../config/db');
 const jwtUtils = require('../utils/jwtUtils');
-const encrypt = require('../utils/encryptData');
 
-// Register User (using Supabase Auth)
+const router = express.Router();
+
+// Register
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, full_name, phone, name, town } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-
+    const { email, password, full_name, phone, name, town, role } = req.body;
     const existing = await db.findOne('users', { email });
-    if (existing) return res.status(409).json({ error: 'User already exists' });
+    if (existing) return res.status(400).json({ error: 'Email already in use' });
 
-    let storedPassword = password;
-    if (encrypt && encrypt.hash) storedPassword = await encrypt.hash(password);
-
-    const newUser = await db.insert('users', {
-      email,
-      password: storedPassword,
-      full_name,
-      name,
-      phone,
-      town,
-      approved: false,
-      role: 'client'
-    });
-
-    const token = jwtUtils.generateToken({ id: newUser.id, email: newUser.email, role: newUser.role });
-
-    res.json({ user: newUser, token });
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await db.insert('users', { email, password: hashed, name, role: 'user' }, 'id,email,name,role');
+    const token = await jwtUtils.signToken({ id: user.id });
+    res.json({ user, token });
   } catch (err) {
-    console.error('Register error', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error(err);
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 
-// Login using Supabase Auth
+// Login
 router.post('/login', async (req, res) => {
-  const { email, phone, password } = req.body;
-  const identifier = email || phone;
-  if (!identifier || !password) return res.status(400).json({ error: 'Missing credentials' });
+  try {
+    const { email, password } = req.body;
+    const user = await db.findOne('users', { email });
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-  // adjust lookup: try email first, else phone
-  const user = await db.findOne('users', email ? { email: identifier } : { phone: identifier });
-  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+    const match = await bcrypt.compare(password, user.password || '');
+    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
-  let match = false;
-  if (encrypt && encrypt.compare) match = await encrypt.compare(password, user.password);
-  else match = password === user.password;
-
-  if (!match) return res.status(401).json({ error: 'Invalid credentials' });
-
-  const token = jwtUtils.generateToken({ id: user.id, email: user.email, role: user.role });
-  res.json({ user, token });
+    const token = await jwtUtils.signToken({ id: user.id });
+    // don't return password
+    delete user.password;
+    res.json({ user, token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Login failed' });
+  }
 });
 
 module.exports = router;

@@ -1,53 +1,34 @@
 const express = require('express');
-const router = express.Router();
-const db = require('../utils/supabaseClient');
+const db = require('../config/db');
 const { authenticate } = require('../middleware/authMiddleware');
 
-// send message
-router.post('/', authenticate, async (req, res) => {
+const router = express.Router();
+
+// Get messages for a conversation (conversation_id)
+router.get('/:conversationId/messages', authenticate, async (req, res) => {
   try {
-    const { receiver_id, rental_id, message, parent_id } = req.body;
-    if (!receiver_id || !message) return res.status(400).json({ error: 'receiver_id and message required' });
-    const inserted = await db.insert('messages', {
-      sender_id: req.user.id,
-      receiver_id,
-      rental_id: rental_id || null,
-      parent_id: parent_id || null,
-      message
-    });
-    res.json(inserted);
+    const messages = await db.findBy('messages', { conversation_id: req.params.conversationId }, '*');
+    res.json(messages);
   } catch (err) {
-    console.error('Send message error', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
 
-// get messages between authenticated user and another user (or by rental)
-router.get('/', authenticate, async (req, res) => {
+// Send a message
+router.post('/:conversationId/messages', authenticate, async (req, res) => {
   try {
-    const { withUser, rental_id } = req.query;
-    if (withUser) {
-      const rows = (await db.query(`
-        SELECT * FROM messages
-        WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
-        ORDER BY created_at ASC;
-      `, [req.user.id, parseInt(withUser)])).rows;
-      return res.json(rows);
-    }
-    if (rental_id) {
-      const rows = await db.findBy('messages', { rental_id });
-      return res.json(rows);
-    }
-    const rows = (await db.query(`
-      SELECT * FROM messages
-      WHERE sender_id = $1 OR receiver_id = $1
-      ORDER BY created_at DESC
-      LIMIT 100;
-    `, [req.user.id])).rows;
-    res.json(rows);
+    const payload = {
+      conversation_id: req.params.conversationId,
+      sender_id: req.user.id,
+      body: req.body.body,
+      created_at: new Date()
+    };
+    const message = await db.insert('messages', payload, '*');
+    res.json(message);
   } catch (err) {
-    console.error('Get messages error', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 

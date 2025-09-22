@@ -1,4 +1,4 @@
-const cors = require('cors');
+const cors = require('cors'); 
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -64,11 +64,35 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/chat', chatRoutes);
 
-// WebSocket initializer accepts the http server
+// Import DB helpers and initialize WebSocket with them
+const db = require('./config/db');
 const initWebsocket = require('./websocket');
-initWebsocket(server);
+// pass db into websocket initializer so websocket can use db helpers
+initWebsocket(server, db);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
+// Graceful shutdown: close HTTP server and PG pool
+async function shutdown(signal) {
+  console.log(`Received ${signal} - shutting down server...`);
+  server.close(async (err) => {
+    if (err) {
+      console.error('Error closing server', err);
+      process.exit(1);
+    }
+    try {
+      await db.pool.end();
+      console.log('DB pool closed, exiting.');
+      process.exit(0);
+    } catch (e) {
+      console.error('Error closing DB pool', e);
+      process.exit(1);
+    }
+  });
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

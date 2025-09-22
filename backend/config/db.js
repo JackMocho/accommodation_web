@@ -1,5 +1,4 @@
-// filepath: backend/utils/supabaseClient.js
-const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 const { Pool } = require('pg');
 
 if (!process.env.DATABASE_URL) {
@@ -86,10 +85,3 @@ module.exports = {
   update,
   del,
 };
-
-/**
- * Postgres helper to replace Supabase client usage.
- * Uses process.env.DATABASE_URL (load via backend/.env)
- * Install: npm install pg
- */
-require('dotenv').config();

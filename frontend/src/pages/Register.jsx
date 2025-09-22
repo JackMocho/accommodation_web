@@ -8,7 +8,7 @@ export default function Register() {
     full_name: '',
     email: '',
     password: '',
-    role: 'client',
+    role: '', // removed default 'client'
     town: '',
     latitude: '',
     longitude: '',
@@ -56,7 +56,8 @@ export default function Register() {
         password: form.password,
         full_name: form.full_name,
         phone: form.phone,
-        role: form.role, // explicit role sent
+        // send role only when selected (empty string => undefined)
+        role: form.role && form.role !== '' ? form.role : undefined,
         town: form.town,
         latitude: lat,
         longitude: lng,
@@ -103,6 +104,7 @@ export default function Register() {
           name="phone"
           placeholder="Phone Number"
           type="tel"
+          value={form.phone}
           onChange={handleChange}
           className="w-full"
           required
@@ -123,6 +125,7 @@ export default function Register() {
           onChange={handleChange}
           className="w-full"
         >
+          <option value="">Select role (optional)</option>
           <option value="client">Client</option>
           <option value="landlord">Landlord / Caretaker</option>
           <option value="admin">Admin (for demo only)</option>

@@ -1,11 +1,10 @@
 // backend/middleware/authMiddleware.js
 
 const jwt = require('jsonwebtoken');
-const supabase = require('../utils/supabaseClient');
-const db = require('../utils/supabaseClient');
+const db = require('../config/db');
 const jwtUtils = require('../utils/jwtUtils');
 
-// Auth middleware using Supabase JWT
+// Auth middleware using JWT from local DB
 const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -27,7 +26,7 @@ const protect = async (req, res, next) => {
   }
 };
 
-// Admin check middleware (checks user_metadata.role)
+// Admin check middleware
 const isAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     return next();
