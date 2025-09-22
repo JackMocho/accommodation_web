@@ -1,36 +1,38 @@
 import React from 'react';
-import useSocket from '../hooks/useSocket';
 
-export default function NotificationBell() {
-  const { notifications, clearNotifications } = useSocket();
+/*
+  Defensive NotificationBell:
+  - Accepts undefined props safely
+  - Treats notifications as an array (defaults to [])
+  - clearNotifications defaults to a no-op
+*/
+export default function NotificationBell(props) {
+  const { notifications = [], clearNotifications = () => {} } = props || {};
+  const count = Array.isArray(notifications) ? notifications.length : 0;
 
   return (
     <div className="relative">
-      <button className="text-white hover:text-blue-300">
-        🔔
+      <button
+        aria-label="Notifications"
+        className="relative p-2 rounded-full hover:bg-gray-700 focus:outline-none"
+        onClick={() => {
+          // toggle or clear via provided callback if present
+          try {
+            clearNotifications();
+          } catch (e) {
+            // noop
+            console.debug('clearNotifications failed', e);
+          }
+        }}
+      >
+        {/* Simple bell icon (text fallback if icons not available) */}
+        <span className="text-white">🔔</span>
+        {count > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5">
+            {count}
+          </span>
+        )}
       </button>
-      {notifications.length > 0 && (
-        <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs animate-bounce">
-          {notifications.length}
-        </span>
-      )}
-
-      {/* Dropdown */}
-      {notifications.length > 0 && (
-        <div className="absolute top-8 right-0 bg-gray-800 p-2 rounded shadow w-64 z-10 max-h-60 overflow-y-auto">
-          <h3 className="font-semibold mb-2">New Messages</h3>
-          <ul>
-            {notifications.map((n, i) => (
-              <li key={i} className="border-b border-gray-700 py-2 text-sm">
-                New message on listing ID: {n.rental_id}
-              </li>
-            ))}
-          </ul>
-          <button onClick={clearNotifications} className="mt-2 text-xs text-blue-400 underline">
-            Clear
-          </button>
-        </div>
-      )}
     </div>
   );
 }

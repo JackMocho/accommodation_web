@@ -47,16 +47,21 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
+      // Convert lat/lng to numbers when present
+      const lat = form.latitude === '' ? undefined : parseFloat(form.latitude);
+      const lng = form.longitude === '' ? undefined : parseFloat(form.longitude);
+
       const payload = {
-        email: form.email ? form.email : undefined, // Only send if not empty
+        email: form.email && form.email.trim() !== '' ? form.email.trim() : undefined,
         password: form.password,
         full_name: form.full_name,
         phone: form.phone,
-        role: form.role,
+        role: form.role, // explicit role sent
         town: form.town,
-        latitude: form.latitude,
-        longitude: form.longitude,
+        latitude: lat,
+        longitude: lng,
       };
+
       await api.post('/auth/register', payload);
       alert('Registration successful! Awaiting approval.');
       navigate('/'); // Redirect to HomePage.jsx
@@ -114,6 +119,7 @@ export default function Register() {
 
         <select
           name="role"
+          value={form.role}
           onChange={handleChange}
           className="w-full"
         >

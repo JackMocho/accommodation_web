@@ -11,12 +11,22 @@ router.get('/me', authenticate, async (req, res) => {
 // update profile
 router.put('/me', authenticate, async (req, res) => {
   try {
-    const allowed = ['full_name', 'name', 'town', 'phone', 'latitude', 'longitude'];
+    // allow these fields to be updated; role is sensitive and only allowed by admin
+    const allowed = ['full_name', 'name', 'town', 'phone', 'latitude', 'longitude', 'role'];
     const data = {};
     allowed.forEach(k => { if (req.body[k] !== undefined) data[k] = req.body[k]; });
+
+    // prevent non-admins from changing their role
+    if ('role' in data && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admin can change role' });
+    }
+
     if (Object.keys(data).length === 0) return res.status(400).json({ error: 'No valid fields' });
     const updated = await db.update('users', { id: req.user.id }, data);
-    res.json(updated[0]);
+    // remove sensitive fields before returning
+    const safe = { ...updated[0] };
+    delete safe.password;
+    res.json(safe);
   } catch (err) {
     console.error('Update profile error', err);
     res.status(500).json({ error: 'Server error' });

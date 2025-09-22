@@ -29,10 +29,16 @@ expressRouter.prototype.use = function (firstArg, ...rest) {
   return origRouterUse.call(this, firstArg, ...rest);
 };
 
-// CORS: allow a full origin string via env (e.g. https://app.example.com) but do NOT use it as a mount path.
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || '*';
+// CORS: allow origins set in env (comma-separated) or fallback to localhost for dev.
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+const allowedOrigins = FRONTEND_ORIGIN.split(',').map(s => s.trim());
 app.use(cors({
-  origin: FRONTEND_ORIGIN,
+  origin: (origin, callback) => {
+    // allow non-browser tools (no origin) and allowed origins
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 

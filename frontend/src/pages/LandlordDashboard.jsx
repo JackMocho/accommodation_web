@@ -109,9 +109,10 @@ export default function LandlordDashboard() {
   const [chatMessages, setChatMessages] = useState([]);
   const [selectedRental, setSelectedRental] = useState(null);
   const [showChat, setShowChat] = useState(false);
-  const [chatRental, setChatRental] = useState(null);
-  const [chatClientId, setChatClientId] = useState(null);
-  const { notifications, clearNotifications } = useSocket();
+
+  // Default notifications to [] in case hook returns undefined
+  const { notifications = [], clearNotifications } = useSocket();
+
   const { user } = useAuth();
   const token = localStorage.getItem('token');
   const userId = user?.id || localStorage.getItem('userId');
@@ -125,9 +126,10 @@ export default function LandlordDashboard() {
   const fetchRentals = async () => {
     try {
       const res = await api.get(`/rentals/user?id=${userId}`);
-      setRentals(res.data);
+      setRentals(res.data || []); // guard against undefined
     } catch (err) {
       console.error('Failed to load rentals:', err);
+      setRentals([]);
     }
   };
 
@@ -135,7 +137,9 @@ export default function LandlordDashboard() {
   const fetchMessages = async () => {
     try {
       const res = await api.get(`/chat/messages/recent/${userId}`);
-      setMessages(res.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      const data = res.data || [];
+      // sort safely
+      setMessages(data.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch (err) {
       setMessages([]);
     }
@@ -145,8 +149,9 @@ export default function LandlordDashboard() {
   const fetchAllChats = async () => {
     try {
       const res = await api.get(`/chat/messages/recent/${userId}`);
+      const data = res.data || [];
       const chatUsers = [];
-      for (const msg of res.data) {
+      for (const msg of data) {
         if (msg.receiver_id === Number(userId) || msg.sender_id === Number(userId)) {
           const otherUserId = msg.sender_id === Number(userId) ? msg.receiver_id : msg.sender_id;
           if (!chatUsers.some(u => u.userId === otherUserId && u.rentalId === msg.rental_id)) {
@@ -250,7 +255,7 @@ export default function LandlordDashboard() {
             onClick={() => setShowMessages((v) => !v)}
           >
             Messages
-            {notifications.length > 0 && (
+            {notifications?.length > 0 && (
               <span className="ml-2 bg-red-500 text-white rounded-full px-2 text-xs">
                 {notifications.length}
               </span>
@@ -266,6 +271,7 @@ export default function LandlordDashboard() {
         <div className="flex gap-2 items-center">
           <NotificationBell notifications={notifications} clearNotifications={clearNotifications} />
         </div>
+
         {showAdminChat && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-gray-900 p-6 rounded shadow-lg w-full max-w-lg relative">
@@ -321,7 +327,7 @@ export default function LandlordDashboard() {
             </button>
             <h3 className="text-xl font-semibold mb-4 mt-4 text-center">Recent Messages</h3>
             <div className="p-4 overflow-y-auto max-h-[70vh]">
-              {messages.length === 0 ? (
+              {(messages?.length || 0) === 0 ? (
                 <p className="text-gray-400">No recent messages.</p>
               ) : (
                 <ul className="space-y-3">
