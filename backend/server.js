@@ -44,18 +44,19 @@ app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // Mount routes using path strings only (no full URLs)
 const authRoutes = require('./routes/authRoutes');
-const rentalRoutes = require('./routes/rentalRoutes');
-const chatRoutes = require('./routes/chatRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const userRoutes = require('./routes/userRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const rentalRoutes = require('./routes/rentalRoutes');
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
+// Mount under /api so frontend requests like /api/stats/counts work
 app.use('/api/auth', authRoutes);
-app.use('/api/rentals', rentalRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/users', userRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/rentals', rentalRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/chat', chatRoutes);
 
 // WebSocket initializer accepts the http server
 const initWebsocket = require('./websocket');

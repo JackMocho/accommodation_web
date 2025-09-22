@@ -38,25 +38,22 @@ router.post('/register', async (req, res) => {
 
 // Login using Supabase Auth
 router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  const { email, phone, password } = req.body;
+  const identifier = email || phone;
+  if (!identifier || !password) return res.status(400).json({ error: 'Missing credentials' });
 
-    const user = await db.findOne('users', { email });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  // adjust lookup: try email first, else phone
+  const user = await db.findOne('users', email ? { email: identifier } : { phone: identifier });
+  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
-    let match = false;
-    if (encrypt && encrypt.compare) match = await encrypt.compare(password, user.password);
-    else match = password === user.password;
+  let match = false;
+  if (encrypt && encrypt.compare) match = await encrypt.compare(password, user.password);
+  else match = password === user.password;
 
-    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+  if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = jwtUtils.generateToken({ id: user.id, email: user.email, role: user.role });
-    res.json({ user, token });
-  } catch (err) {
-    console.error('Login error', err);
-    res.status(500).json({ error: 'Server error' });
-  }
+  const token = jwtUtils.generateToken({ id: user.id, email: user.email, role: user.role });
+  res.json({ user, token });
 });
 
 module.exports = router;

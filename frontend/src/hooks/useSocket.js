@@ -1,57 +1,37 @@
 // src/hooks/useSocket.js
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-const WS_URL =
-  import.meta.env.VITE_WS_URL ||
-  (import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL.replace(/^http/, 'ws')
-    : 'ws://localhost:5000');
-
-export default function useSocket() {
-  const [socket, setSocket] = useState(null);
-  const [notifications, setNotifications] = useState([]);
+export default function useSocket(path = '/ws', onMessage) {
+  const socketRef = useRef(null);
 
   useEffect(() => {
-    const ws = new WebSocket(WS_URL);
+    const envWS = import.meta.env.VITE_WS_URL;
+    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    let wsUrl = '';
 
-    ws.onopen = () => {
-      setSocket(ws);
-      ws.send(
-        JSON.stringify({
-          type: 'CLIENT_READY',
-          id: localStorage.getItem('userId'),
-        })
-      );
-    };
-
-    ws.onmessage = (event) => {
+    if (envWS) {
+      wsUrl = envWS.replace(/\/$/, '');
+    } else {
       try {
-        const msg = JSON.parse(event.data);
-
-        if (msg.type === 'NEW_MESSAGE') {
-          setNotifications((prev) => [
-            ...prev,
-            {
-              from: msg.sender_id,
-              message: msg.message,
-              rental_id: msg.rental_id,
-              time: new Date().toLocaleTimeString(),
-            },
-          ]);
-        }
-      } catch (err) {
-        console.error('Failed to parse socket message:', err);
+        const u = new URL(apiUrl);
+        const scheme = u.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${scheme}//${u.host}${path}`;
+      } catch (e) {
+        // fallback to current origin
+        const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${scheme}//${window.location.host}${path}`;
       }
-    };
+    }
+
+    socketRef.current = new WebSocket(wsUrl);
+    socketRef.current.onmessage = (ev) => onMessage && onMessage(JSON.parse(ev.data));
+    socketRef.current.onclose = () => { /* reconnect logic if needed */ };
+    socketRef.current.onerror = (err) => console.error('Socket error', err);
 
     return () => {
-      ws.close();
+      socketRef.current?.close();
     };
-    // eslint-disable-next-line
-  }, []);
+  }, [path, onMessage]);
 
-  return {
-    notifications,
-    clearNotifications: () => setNotifications([]),
-  };
+  return socketRef;
 }
