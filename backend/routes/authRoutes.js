@@ -81,9 +81,17 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await db.findOne('users', { email });
+    const { email, phone, password } = req.body;
+    // Support login by email or phone
+    const query = email ? { email } : phone ? { phone } : null;
+    if (!query) return res.status(400).json({ error: 'Email or phone required' });
+
+    const user = await db.findOne('users', query);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+    // Check approval and suspension
+    if (!user.approved) return res.status(403).json({ error: 'Account not approved yet.' });
+    if (user.suspended) return res.status(403).json({ error: 'Account is suspended.' });
 
     const match = await bcrypt.compare(password, user.password || '');
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
