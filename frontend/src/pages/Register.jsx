@@ -8,7 +8,7 @@ export default function Register() {
     full_name: '',
     email: '',
     password: '',
-    role: '', // must be one of: client, landlord, admin
+    role: 'client', // must be one of: client, landlord, admin
     town: '',
     latitude: '',
     longitude: '',
