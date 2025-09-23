@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../config/db');
-const jwtUtils = require('../utils/jwtUtils');
+const { signToken } = require('../utils/jwtUtils'); // <-- FIXED
 
 const router = express.Router();
 
@@ -69,7 +69,7 @@ router.post('/register', async (req, res) => {
     const user = await db.findOne('users', { id: created.id });
     if (user && user.password) delete user.password;
 
-    const token = await jwtUtils.signToken({ id: created.id });
+    const token = await signToken({ id: created.id });
 
     res.json({ user, token, message: 'Registration successful' });
   } catch (err) {
@@ -88,7 +88,7 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password || '');
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = await jwtUtils.signToken({ id: user.id });
+    const token = await signToken({ id: user.id });
     if (user.password) delete user.password;
     res.json({ user, token });
   } catch (err) {
