@@ -1,7 +1,6 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const db = require('../config/db');
-const { signToken } = require('../utils/jwtUtils'); // <-- FIXED
+const { signToken } = require('../utils/jwtUtils');
 
 const router = express.Router();
 
@@ -51,11 +50,10 @@ router.post('/register', async (req, res) => {
     const existing = await db.findOne('users', { email });
     if (existing) return res.status(400).json({ error: 'Email already in use' });
 
-    const hashed = await bcrypt.hash(password, 10);
-
+    // Save password as plain text
     const insertData = {
       email,
-      password: hashed,
+      password, // plain text
       name: full_name,
       role,
       phone,
@@ -93,8 +91,8 @@ router.post('/login', async (req, res) => {
     if (!user.approved) return res.status(403).json({ error: 'Account not approved yet.' });
     if (user.suspended) return res.status(403).json({ error: 'Account is suspended.' });
 
-    const match = await bcrypt.compare(password, user.password || '');
-    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+    // Compare plain text password
+    if (user.password !== password) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = await signToken({ id: user.id });
     if (user.password) delete user.password;
