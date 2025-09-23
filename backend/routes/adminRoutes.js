@@ -51,4 +51,36 @@ router.delete('/users/:id', authenticate, requireRole('admin'), async (req, res)
   }
 });
 
+// Get all rentals
+router.get('/rentals', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const rentals = await db.findAll('rentals');
+    res.json(rentals);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch rentals' });
+  }
+});
+
+// Get system stats
+router.get('/stats', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const totalUsers = await db.count('users');
+    const totalRentals = await db.count('rentals');
+    const activeRentals = await db.count('rentals', { status: 'active' });
+    res.json({ totalUsers, totalRentals, activeRentals });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// Get pending users
+router.get('/pending-users', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const pending = await db.findBy('users', { approved: false });
+    res.json(pending);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch pending users' });
+  }
+});
+
 module.exports = router;
