@@ -8,7 +8,7 @@ export default function Register() {
     full_name: '',
     email: '',
     password: '',
-    role: '', // removed default 'client'
+    role: '', // must be one of: client, landlord, admin
     town: '',
     latitude: '',
     longitude: '',
@@ -18,19 +18,20 @@ export default function Register() {
   const navigate = useNavigate();
 
   useAutoLocation(
-    (lat) => setForm(f => ({ ...f, latitude: lat })),
-    (lng) => setForm(f => ({ ...f, longitude: lng }))
+    (lat) => setForm((f) => ({ ...f, latitude: lat })),
+    (lng) => setForm((f) => ({ ...f, longitude: lng }))
   );
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((s) => ({ ...s, [name]: value }));
   };
 
   const handleGeolocate = () => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setForm(f => ({
+          setForm((f) => ({
             ...f,
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
@@ -40,35 +41,52 @@ export default function Register() {
         },
         () => alert('Could not get your location')
       );
+    } else {
+      alert('Geolocation not supported in this browser');
     }
   };
 
-  // Example registration handler
   const handleRegister = async (e) => {
     e.preventDefault();
-    try {
-      // Convert lat/lng to numbers when present
-      const lat = form.latitude === '' ? undefined : parseFloat(form.latitude);
-      const lng = form.longitude === '' ? undefined : parseFloat(form.longitude);
 
+    // require full_name, email, password, phone and role
+    if (
+      !form.full_name?.trim() ||
+      !form.email?.trim() ||
+      !form.password?.trim() ||
+      !form.phone?.trim() ||
+      !form.role?.trim()
+    ) {
+      return alert('Please provide Full Name, Email, Password, Phone and Role.');
+    }
+
+    try {
       const payload = {
-        email: form.email && form.email.trim() !== '' ? form.email.trim() : undefined,
+        full_name: form.full_name.trim(),
+        email: form.email.trim(),
         password: form.password,
-        full_name: form.full_name,
-        phone: form.phone,
-        // send role only when selected (empty string => undefined)
-        role: form.role && form.role !== '' ? form.role : undefined,
-        town: form.town,
-        latitude: lat,
-        longitude: lng,
+        phone: form.phone.trim(),
+        role: form.role,
+        town: form.town || undefined,
+        latitude:
+          form.latitude === '' || form.latitude === undefined
+            ? undefined
+            : Number(form.latitude),
+        longitude:
+          form.longitude === '' || form.longitude === undefined
+            ? undefined
+            : Number(form.longitude),
       };
 
-      await api.post('/auth/register', payload);
-      alert('Registration successful! Awaiting approval.');
-      navigate('/'); // Redirect to HomePage.jsx
+      const res = await api.post('/auth/register', payload);
+      alert(res.data?.message || 'Registration successful!');
+
+      navigate('/login');
     } catch (err) {
-      console.error('Registration failed:', err.response?.data || err.message);
-      alert('Registration failed. Please try again.');
+      // improved error reporting: try to show backend message
+      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      console.error('Registration error response:', err.response || err);
+      alert(`Registration failed: ${serverMsg || err.message}`);
     }
   };
 
@@ -106,14 +124,15 @@ export default function Register() {
           type="tel"
           value={form.phone}
           onChange={handleChange}
-          className="w-full"
           required
+          className="w-full"
         />
 
         <input
           name="password"
           placeholder="Password"
           type="password"
+          value={form.password}
           onChange={handleChange}
           required
           className="w-full"
@@ -123,9 +142,10 @@ export default function Register() {
           name="role"
           value={form.role}
           onChange={handleChange}
+          required
           className="w-full"
         >
-          <option value="">Select role (optional)</option>
+        
           <option value="client">Client</option>
           <option value="landlord">Landlord / Caretaker</option>
           <option value="admin">Admin (for demo only)</option>
@@ -138,7 +158,6 @@ export default function Register() {
           value={form.town}
           onChange={handleChange}
           className="p-2 rounded bg-gray-700 text-white w-full"
-          required
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -149,7 +168,7 @@ export default function Register() {
             value={form.latitude}
             onChange={handleChange}
             className="p-2 rounded-xl bg-gray-700 text-white w-full"
-            required
+            step="any"
           />
           <input
             type="number"
@@ -158,9 +177,10 @@ export default function Register() {
             value={form.longitude}
             onChange={handleChange}
             className="p-2 rounded-xl bg-gray-700 text-white w-full"
-            required
+            step="any"
           />
         </div>
+
         <button
           type="button"
           onClick={handleGeolocate}

@@ -8,17 +8,73 @@ const router = express.Router();
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, full_name, phone, name, town, role } = req.body;
+    let {
+      email,
+      password,
+      full_name,
+      phone,
+      town,
+      latitude,
+      longitude,
+      role,
+    } = req.body;
+
+    if (!full_name || !email || !password || !phone || !role) {
+      return res
+        .status(400)
+        .json({ error: 'full_name, email, password, phone and role are required' });
+    }
+
+    // Add stricter phone validation
+    if (typeof phone !== 'string' || phone.trim().length < 7) {
+      return res.status(400).json({ error: 'A valid phone number is required.' });
+    }
+
+    // Accept only "client", "landlord", or "admin" for role
+    const allowedRoles = ['client', 'landlord', 'admin'];
+    if (!allowedRoles.includes(role)) {
+      console.error('Invalid role value received:', role);
+      return res.status(400).json({ error: `role must be one of: ${allowedRoles.join(', ')}` });
+    }
+
+    email = String(email).trim().toLowerCase();
+    phone = String(phone).trim();
+    full_name = String(full_name).trim();
+
+    const lat = latitude === undefined || latitude === '' || latitude === null ? undefined : Number(latitude);
+    const lng = longitude === undefined || longitude === '' || longitude === null ? undefined : Number(longitude);
+
+    if ((lat !== undefined && Number.isNaN(lat)) || (lng !== undefined && Number.isNaN(lng))) {
+      return res.status(400).json({ error: 'latitude and longitude must be valid numbers' });
+    }
+
     const existing = await db.findOne('users', { email });
     if (existing) return res.status(400).json({ error: 'Email already in use' });
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await db.insert('users', { email, password: hashed, name, role: 'user' }, 'id,email,name,role');
-    const token = await jwtUtils.signToken({ id: user.id });
-    res.json({ user, token });
+
+    const insertData = {
+      email,
+      password: hashed,
+      name: full_name,
+      role,
+      phone,
+    };
+    if (town) insertData.town = town;
+    if (lat !== undefined) insertData.latitude = lat;
+    if (lng !== undefined) insertData.longitude = lng;
+
+    const created = await db.insert('users', insertData, 'id');
+
+    const user = await db.findOne('users', { id: created.id });
+    if (user && user.password) delete user.password;
+
+    const token = await jwtUtils.signToken({ id: created.id });
+
+    res.json({ user, token, message: 'Registration successful' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Registration failed' });
+    console.error('Register error:', err.stack || err);
+    return res.status(500).json({ error: err.message || 'Registration failed' });
   }
 });
 
@@ -33,8 +89,7 @@ router.post('/login', async (req, res) => {
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = await jwtUtils.signToken({ id: user.id });
-    // don't return password
-    delete user.password;
+    if (user.password) delete user.password;
     res.json({ user, token });
   } catch (err) {
     console.error(err);
