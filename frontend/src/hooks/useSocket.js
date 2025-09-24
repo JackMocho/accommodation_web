@@ -1,26 +1,18 @@
 // src/hooks/useSocket.js
 import { useEffect, useRef } from 'react';
+import { useAuth } from './useAuth';
 
 export default function useSocket(path = '/ws', onMessage) {
   const socketRef = useRef(null);
+  const { token } = useAuth();
 
   useEffect(() => {
-    const envWS = import.meta.env.VITE_WS_URL;
-    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
     let wsUrl = '';
 
-    if (envWS) {
-      wsUrl = envWS.replace(/\/$/, '');
+    if (token) {
+      wsUrl = `wss://accommodation-web.onrender.com/ws?token=${token}`;
     } else {
-      try {
-        const u = new URL(apiUrl);
-        const scheme = u.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${scheme}//${u.host}${path}`;
-      } catch (e) {
-        // fallback to current origin
-        const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${scheme}//${window.location.host}${path}`;
-      }
+      wsUrl = `wss://accommodation-web.onrender.com/ws`;
     }
 
     socketRef.current = new WebSocket(wsUrl);

@@ -24,12 +24,13 @@ export default function AdminDashboard() {
   const [showChat, setShowChat] = useState(false);
   const [chatUserId, setChatUserId] = useState(null);
 
-  const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
+  // Debug: Log the JWT token on every render
+  console.log('JWT token in localStorage:', localStorage.getItem('token'));
 
   // Fetch all users
   const fetchUsers = async () => {
     try {
-      const res = await api.get('/admin/users', authHeaders);
+      const res = await api.get('/admin/users');
       setUsers(res.data);
     } catch (err) {
       setError('Failed to fetch users.');
@@ -39,7 +40,7 @@ export default function AdminDashboard() {
   // Fetch pending users (approved=false)
   const fetchPendingUsers = async () => {
     try {
-      const res = await api.get('/admin/pending-users', authHeaders); // <-- use authHeaders
+      const res = await api.get('/admin/pending-users'); // <-- use authHeaders
       setPendingUsers(res.data);
     } catch (err) {
       setError('Failed to fetch pending users.');
@@ -49,7 +50,7 @@ export default function AdminDashboard() {
   // Fetch suspended users (suspended=true)
   const fetchSuspendedUsers = async () => {
     try {
-      const res = await api.get('/admin/users', authHeaders);
+      const res = await api.get('/admin/users');
       setSuspendedUsers(res.data.filter(u => u.suspended));
     } catch (err) {
       setError('Failed to fetch suspended users.');
@@ -59,7 +60,7 @@ export default function AdminDashboard() {
   // Fetch rentals
   const fetchRentals = async () => {
     try {
-      const res = await api.get('/admin/rentals', authHeaders);
+      const res = await api.get('/admin/rentals');
       setRentals(res.data);
     } catch (err) {
       setError('Failed to fetch rentals.');
@@ -69,7 +70,7 @@ export default function AdminDashboard() {
   // Fetch stats
   const fetchStats = async () => {
     try {
-      const res = await api.get('/admin/stats', authHeaders);
+      const res = await api.get('/admin/stats');
       setStats(res.data);
     } catch (err) {
       setError('Failed to fetch stats.');
@@ -85,8 +86,7 @@ export default function AdminDashboard() {
     try {
       await api.post(
         `/admin/users/${id}/approve`, // <-- POST, not PUT
-        {},
-        authHeaders
+        {}
       );
       setSuccess('User approved');
       fetchPendingUsers();
@@ -104,7 +104,7 @@ export default function AdminDashboard() {
   // Suspend user (set suspended=true, approved=false)
   const handleSuspendUser = async (id) => {
     try {
-      await api.post(`/admin/users/${id}/suspend`, {}, authHeaders); // <-- POST, not PUT
+      await api.post(`/admin/users/${id}/suspend`, {}); // <-- POST, not PUT
       setSuccess('User suspended');
       fetchUsers();
       fetchSuspendedUsers();
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
   // Delete user
   const handleDeleteUser = async (id) => {
     try {
-      await api.delete(`/admin/users/${id}`, authHeaders); // <-- /users/:id
+      await api.delete(`/admin/users/${id}`); // <-- /users/:id
       setSuccess('User deleted');
       fetchUsers();
       fetchPendingUsers();
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
   // Delete rental
   const handleDeleteRental = async (id) => {
     try {
-      await api.delete(`/admin/rental/${id}`, authHeaders);
+      await api.delete(`/admin/rental/${id}`);
       setSuccess('Rental deleted');
       fetchRentals();
     } catch (err) {
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
   // Promote user to admin
   const handlePromoteToAdmin = async (id) => {
     try {
-      await api.patch(`/admin/users/${id}/role`, { role: 'admin' }, authHeaders);
+      await api.patch(`/admin/users/${id}/role`, { role: 'admin' });
       setSuccess('User promoted to admin');
       fetchUsers();
     } catch (err) {
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
   // Chat: Fetch messages with selected user
   const fetchMessages = async (userId) => {
     try {
-      const res = await api.get(`/chat/admin/${userId}`, authHeaders);
+      const res = await api.get(`/chat/admin/${userId}`);
       setMessages(res.data);
       setSelectedUser(userId);
       setChatError('');
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
       await api.post('/chat/admin/send', {
         to: selectedUser,
         message: chatInput,
-      }, authHeaders);
+      });
       setChatInput('');
       fetchMessages(selectedUser);
     } catch (err) {

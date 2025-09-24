@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { setApiToken } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -34,7 +35,8 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const decoded = JSON.parse(atob(token.split('.')[0]));
+        // FIX: decode payload (index 1)
+        const decoded = JSON.parse(atob(token.split('.')[1]));
         setUser(decoded);
         setIsAuthenticated(true);
         setToken(token); // <-- add this
@@ -50,8 +52,13 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  useEffect(() => {
+    setApiToken(token); // token is your current auth token from context state
+  }, [token]);
+
   const login = (token) => {
     localStorage.setItem('token', token);
+    // FIX: decode payload (index 1)
     const decoded = JSON.parse(atob(token.split('.')[1]));
     setUser(decoded);
     setIsAuthenticated(true);

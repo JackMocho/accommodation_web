@@ -113,8 +113,7 @@ export default function LandlordDashboard() {
   // Default notifications to [] in case hook returns undefined
   const { notifications = [], clearNotifications } = useSocket();
 
-  const { user } = useAuth();
-  const token = localStorage.getItem('token');
+  const { user, token } = useAuth();
   const userId = user?.id || localStorage.getItem('userId');
   const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
   const userPhone = user?.phone || localStorage.getItem('userPhone') || '';
@@ -122,11 +121,14 @@ export default function LandlordDashboard() {
   const adminUserId = '1';
   const navigate = useNavigate();
 
+  // Debugging: Log the JWT token on every render
+  console.log('JWT token in localStorage:', localStorage.getItem('token'));
+
   // Fetch rentals
   const fetchRentals = async () => {
     try {
       const res = await api.get(`/rentals/user?id=${userId}`);
-      setRentals(res.data || []); // guard against undefined
+      setRentals(res.data || []);
     } catch (err) {
       console.error('Failed to load rentals:', err);
       setRentals([]);
@@ -136,9 +138,10 @@ export default function LandlordDashboard() {
   // Fetch recent messages for landlord
   const fetchMessages = async () => {
     try {
-      const res = await api.get(`/chat/messages/recent/${userId}`);
+      const res = await api.get(`/chat/messages/recent/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = res.data || [];
-      // sort safely
       setMessages(data.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch (err) {
       setMessages([]);
@@ -148,7 +151,9 @@ export default function LandlordDashboard() {
   // Fetch all chats for landlord
   const fetchAllChats = async () => {
     try {
-      const res = await api.get(`/chat/messages/recent/${userId}`);
+      const res = await api.get(`/chat/messages/recent/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = res.data || [];
       const chatUsers = [];
       for (const msg of data) {
@@ -474,7 +479,9 @@ export default function LandlordDashboard() {
                         setSelectedChatUser(u);
                         // Fetch messages for this rental and client
                         const res = await api.get(
-                          `/chat/messages/${u.rentalId}`
+                          `/chat/messages/${u.rentalId}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          }
                         );
                         setChatMessages(res.data.filter(
                           m => (m.sender_id === u.userId || m.receiver_id === u.userId)
@@ -539,7 +546,9 @@ export default function LandlordDashboard() {
                       setReplyText('');
                       // Refresh chat
                       const res = await api.get(
-                        `/chat/messages/${selectedChatUser.rentalId}`
+                        `/chat/messages/${selectedChatUser.rentalId}`, {
+                          headers: { Authorization: `Bearer ${token}` }
+                        }
                       );
                       setChatMessages(res.data.filter(
                         m => (m.sender_id === selectedChatUser.userId || m.receiver_id === selectedChatUser.userId)
