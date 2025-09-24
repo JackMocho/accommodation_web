@@ -207,7 +207,11 @@ export default function AdminDashboard() {
       navigate('/login');
       return;
     }
-    // fetch admin data...
+    fetchUsers();
+    fetchPendingUsers();
+    fetchSuspendedUsers();
+    fetchRentals();
+    fetchStats();
   }, [user, token]);
 
   // Swap coordinates for all rentals for Leaflet ([lat, lng])

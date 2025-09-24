@@ -34,20 +34,19 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        // FIX: decode payload (index 1)
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        setUser(decoded);
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUser(payload); // If your backend returns user info in payload
         setIsAuthenticated(true);
-        setToken(token); // <-- add this
+        setToken(token);
       } catch (err) {
         setUser(null);
         setIsAuthenticated(false);
-        setToken(null); // <-- add this
+        setToken(null);
       }
     } else {
       setUser(null);
       setIsAuthenticated(false);
-      setToken(null); // <-- add this
+      setToken(null);
     }
   }, []);
 
