@@ -1,6 +1,6 @@
 // src/hooks/useSocket.js
 import { useEffect, useRef } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '../context/AuthContext';
 
 export default function useSocket(path = '/ws', onMessage) {
   const socketRef = useRef(null);
