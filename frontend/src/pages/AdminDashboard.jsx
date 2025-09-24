@@ -4,9 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import MapComponent from '../components/MapComponent';
 import Chat from '../components/Chat';
 import bgImage from '../assets/image15.jpg';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
   const { user, token } = useAuth();
+  const navigate = useNavigate();
 
   const [users, setUsers] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -201,13 +203,12 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchUsers();
-    fetchPendingUsers();
-    fetchSuspendedUsers();
-    fetchRentals();
-    fetchStats();
-    // eslint-disable-next-line
-  }, []);
+    if (!user || user.role !== 'admin') {
+      navigate('/login');
+      return;
+    }
+    // fetch admin data...
+  }, [user, token]);
 
   // Swap coordinates for all rentals for Leaflet ([lat, lng])
   const rentalsWithLatLng = rentals

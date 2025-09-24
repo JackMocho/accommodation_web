@@ -56,13 +56,11 @@ export function AuthProvider({ children }) {
     // No need to call setApiToken, axios interceptor handles token
   }, [token]);
 
-  const login = (token) => {
+  const login = (token, user) => {
     localStorage.setItem('token', token);
-    // FIX: decode payload (index 1)
-    const decoded = JSON.parse(atob(token.split('.')[1]));
-    setUser(decoded);
+    setToken(token);
+    setUser(user); // <-- set user object with role
     setIsAuthenticated(true);
-    setToken(token); // <-- add this
   };
 
   const logout = () => {
