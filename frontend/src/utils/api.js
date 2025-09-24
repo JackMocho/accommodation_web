@@ -1,18 +1,20 @@
 // src/utils/api.js
-import axios from 'axios';
+import axios from "axios";
 
-let authToken = null;
+const API_BASE_URL = "https://accommodation-web.onrender.com/api";
 
-const api = axios.create({
-  baseURL: 'https://accommodation-web.onrender.com/api',
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 15000,
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
 });
 
-// Add a request interceptor to attach the token
 api.interceptors.request.use(
   (config) => {
-    const token = authToken || localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -20,10 +22,5 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
-// Allow setting the token from context
-export const setApiToken = (token) => {
-  authToken = token;
-};
 
 export default api;
