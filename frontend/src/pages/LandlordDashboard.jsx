@@ -127,7 +127,9 @@ export default function LandlordDashboard() {
   // Fetch rentals
   const fetchRentals = async () => {
     try {
-      const res = await api.get(`/rentals/user?id=${userId}`);
+      const res = await api.get(`/rentals/user?id=${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRentals(res.data || []);
     } catch (err) {
       console.error('Failed to load rentals:', err);

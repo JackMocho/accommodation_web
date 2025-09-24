@@ -30,7 +30,9 @@ export default function AdminDashboard() {
   // Fetch all users
   const fetchUsers = async () => {
     try {
-      const res = await api.get('/admin/users');
+      const res = await api.get('/admin/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setUsers(res.data);
     } catch (err) {
       setError('Failed to fetch users.');
@@ -40,7 +42,9 @@ export default function AdminDashboard() {
   // Fetch pending users (approved=false)
   const fetchPendingUsers = async () => {
     try {
-      const res = await api.get('/admin/pending-users'); // <-- use authHeaders
+      const res = await api.get('/admin/pending-users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPendingUsers(res.data);
     } catch (err) {
       setError('Failed to fetch pending users.');
@@ -50,7 +54,9 @@ export default function AdminDashboard() {
   // Fetch suspended users (suspended=true)
   const fetchSuspendedUsers = async () => {
     try {
-      const res = await api.get('/admin/users');
+      const res = await api.get('/admin/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSuspendedUsers(res.data.filter(u => u.suspended));
     } catch (err) {
       setError('Failed to fetch suspended users.');
@@ -60,7 +66,9 @@ export default function AdminDashboard() {
   // Fetch rentals
   const fetchRentals = async () => {
     try {
-      const res = await api.get('/admin/rentals');
+      const res = await api.get('/admin/rentals', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRentals(res.data);
     } catch (err) {
       setError('Failed to fetch rentals.');
@@ -70,7 +78,9 @@ export default function AdminDashboard() {
   // Fetch stats
   const fetchStats = async () => {
     try {
-      const res = await api.get('/admin/stats');
+      const res = await api.get('/admin/stats', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setStats(res.data);
     } catch (err) {
       setError('Failed to fetch stats.');
@@ -85,8 +95,9 @@ export default function AdminDashboard() {
     }
     try {
       await api.post(
-        `/admin/users/${id}/approve`, // <-- POST, not PUT
-        {}
+        `/admin/users/${id}/approve`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setSuccess('User approved');
       fetchPendingUsers();
@@ -104,7 +115,9 @@ export default function AdminDashboard() {
   // Suspend user (set suspended=true, approved=false)
   const handleSuspendUser = async (id) => {
     try {
-      await api.post(`/admin/users/${id}/suspend`, {}); // <-- POST, not PUT
+      await api.post(`/admin/users/${id}/suspend`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSuccess('User suspended');
       fetchUsers();
       fetchSuspendedUsers();
@@ -117,7 +130,9 @@ export default function AdminDashboard() {
   // Delete user
   const handleDeleteUser = async (id) => {
     try {
-      await api.delete(`/admin/users/${id}`); // <-- /users/:id
+      await api.delete(`/admin/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSuccess('User deleted');
       fetchUsers();
       fetchPendingUsers();
@@ -130,7 +145,9 @@ export default function AdminDashboard() {
   // Delete rental
   const handleDeleteRental = async (id) => {
     try {
-      await api.delete(`/admin/rental/${id}`);
+      await api.delete(`/admin/rental/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSuccess('Rental deleted');
       fetchRentals();
     } catch (err) {
@@ -141,7 +158,9 @@ export default function AdminDashboard() {
   // Promote user to admin
   const handlePromoteToAdmin = async (id) => {
     try {
-      await api.patch(`/admin/users/${id}/role`, { role: 'admin' });
+      await api.patch(`/admin/users/${id}/role`, { role: 'admin' }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSuccess('User promoted to admin');
       fetchUsers();
     } catch (err) {
@@ -152,7 +171,9 @@ export default function AdminDashboard() {
   // Chat: Fetch messages with selected user
   const fetchMessages = async (userId) => {
     try {
-      const res = await api.get(`/chat/admin/${userId}`);
+      const res = await api.get(`/chat/admin/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setMessages(res.data);
       setSelectedUser(userId);
       setChatError('');
@@ -169,6 +190,8 @@ export default function AdminDashboard() {
       await api.post('/chat/admin/send', {
         to: selectedUser,
         message: chatInput,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       setChatInput('');
       fetchMessages(selectedUser);
