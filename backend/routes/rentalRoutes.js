@@ -61,4 +61,17 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
+// Get rentals by user ID
+router.get('/user', authenticate, async (req, res) => {
+  const userId = req.query.id;
+  if (!userId) return res.status(400).json({ error: 'User ID required' });
+  try {
+    const rentals = await db.findBy('rentals', { owner_id: userId });
+    res.json(rentals);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user rentals' });
+  }
+});
+
 module.exports = router;

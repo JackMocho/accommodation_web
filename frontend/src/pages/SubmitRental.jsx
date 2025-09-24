@@ -4,9 +4,11 @@ import LocationPicker from '../components/LocationPicker';
 import useAutoLocation from '../hooks/useAutoLocation';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext'; // <-- add this import
 
 export default function SubmitRental() {
   const navigate = useNavigate();
+  const { token } = useAuth(); // <-- get token from context
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -109,7 +111,9 @@ export default function SubmitRental() {
     };
 
     try {
-      await api.post('/rentals/submit', payload);
+      await api.post('/rentals', payload, {
+        headers: { Authorization: `Bearer ${token}` } // <-- send token here
+      });
       setSuccessMsg('Rental submitted successfully!');
       setTimeout(() => {
         navigate('/HomePage', { state: { successMsg: 'Your property was listed successfully!' } });
