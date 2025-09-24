@@ -43,22 +43,18 @@ const isAdmin = (req, res, next) => {
  * Uses jwtUtils for verification.
  */
 const authenticate = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No token, authorization denied' });
+  }
+  const token = authHeader.split(' ')[1];
   try {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.replace('Bearer ', '').trim();
-    if (!token) return res.status(401).json({ error: 'No token provided' });
-
-    const payload = await jwtUtils.verifyToken(token);
-    if (!payload || !payload.id) return res.status(401).json({ error: 'Invalid token' });
-
-    const user = await db.findOne('users', { id: payload.id });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.findOne('users', { id: decoded.id });
     if (!user) return res.status(401).json({ error: 'User not found' });
-    if (user.suspended) return res.status(403).json({ error: 'Account suspended' });
-
     req.user = user;
     next();
   } catch (err) {
-    console.error('Auth middleware error:', err);
     return res.status(401).json({ error: 'Authentication failed' });
   }
 };
