@@ -1,7 +1,6 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { setApiToken } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -53,7 +52,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    setApiToken(token); // token is your current auth token from context state
+    // REMOVE setApiToken(token);
+    // No need to call setApiToken, axios interceptor handles token
   }, [token]);
 
   const login = (token) => {
