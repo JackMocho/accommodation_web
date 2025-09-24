@@ -67,7 +67,7 @@ router.get('/user', authenticate, async (req, res) => {
   if (!userId) return res.status(400).json({ error: 'User ID required' });
   try {
     // FIX: use user_id instead of owner_id
-    const rentals = await db.findBy('rentals', { user_id: userId });
+    const rentals = await db.findBy('rentals', { owner_id: userId });
     res.json(rentals);
   } catch (err) {
     console.error(err);

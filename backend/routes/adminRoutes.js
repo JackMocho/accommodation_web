@@ -88,4 +88,17 @@ router.get('/pending-users', authenticate, requireRole('admin'), async (req, res
   }
 });
 
+// Approve rental (admin only)
+router.patch('/rental/:id/approve', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const rental = await db.findOne('rentals', { id: req.params.id });
+    if (!rental) return res.status(404).json({ error: 'Rental not found' });
+    const updated = await db.update('rentals', { id: req.params.id }, { approved: true }, '*');
+    res.json(updated[0] || null);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to approve rental' });
+  }
+});
+
 module.exports = router;

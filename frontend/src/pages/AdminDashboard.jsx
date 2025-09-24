@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [suspendedUsers, setSuspendedUsers] = useState([]);
   const [rentals, setRentals] = useState([]); // <-- THIS FIXES YOUR ERROR
+  const [pendingRentals, setPendingRentals] = useState([]);
   const [stats, setStats] = useState({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -74,6 +75,18 @@ export default function AdminDashboard() {
       setRentals(res.data);
     } catch (err) {
       setError('Failed to fetch rentals.');
+    }
+  };
+
+  // Fetch pending rentals (approved=false)
+  const fetchPendingRentals = async () => {
+    try {
+      const res = await api.get('/admin/rentals?approved=false', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPendingRentals(res.data);
+    } catch (err) {
+      setError('Failed to fetch pending rentals.');
     }
   };
 
@@ -157,6 +170,20 @@ export default function AdminDashboard() {
     }
   };
 
+  // Approve rental (set approved=true)
+  const handleApproveRental = async (id) => {
+    try {
+      await api.patch(`/admin/rental/${id}/approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSuccess('Rental approved');
+      fetchPendingRentals();
+      fetchRentals();
+    } catch (err) {
+      setError('Failed to approve rental.');
+    }
+  };
+
   // Promote user to admin
   const handlePromoteToAdmin = async (id) => {
     try {
@@ -212,6 +239,7 @@ export default function AdminDashboard() {
     fetchSuspendedUsers();
     fetchRentals();
     fetchStats();
+    fetchPendingRentals();
   }, [user, token]);
 
   // Swap coordinates for all rentals for Leaflet ([lat, lng])
@@ -295,6 +323,43 @@ export default function AdminDashboard() {
                       <td className="p-2">
                         <button onClick={() => handleApproveUser(u.id)} className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded mr-2 text-white shadow transition">Approve</button>
                         <button onClick={() => handleDeleteUser(u.id)} className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white shadow transition">Delete</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+
+        {/* Pending Rentals Section */}
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-white">Pending Rentals</h2>
+          <div className="overflow-x-auto rounded-lg shadow-lg">
+            <table className="w-full table-auto bg-white/10 backdrop-blur-md rounded text-white">
+              <thead>
+                <tr className="bg-purple-900/80">
+                  <th className="p-2">Title</th>
+                  <th className="p-2">Town</th>
+                  <th className="p-2">Owner</th>
+                  <th className="p-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingRentals.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center p-4 text-gray-200">No pending rentals.</td>
+                  </tr>
+                ) : (
+                  pendingRentals.map(r => (
+                    <tr key={r.id} className="hover:bg-purple-800/40 transition">
+                      <td className="p-2">{r.title}</td>
+                      <td className="p-2">{r.town}</td>
+                      <td className="p-2">{r.owner_name || r.owner_id}</td>
+                      <td className="p-2">
+                        <button onClick={() => handleApproveRental(r.id)} className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded mr-2 text-white shadow transition">Approve</button>
+                        <button onClick={() => handleDeleteRental(r.id)} className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white shadow transition">Delete</button>
                       </td>
                     </tr>
                   ))
@@ -453,6 +518,8 @@ export default function AdminDashboard() {
           </div>
         </section>
 
+        
+
         {/* Rental detail modal with map */}
         {selectedRental && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
@@ -495,7 +562,7 @@ export default function AdminDashboard() {
                     <span className="text-xs text-gray-400 ml-2">{new Date(msg.created_at).toLocaleString()}</span>
                   </div>
                 ))
-              )}
+        )}
             </div>
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <input

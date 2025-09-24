@@ -53,13 +53,13 @@ const authRoutes = require('./routes/authRoutes');
 const rentalRoutes = require('./routes/rentalRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+app.use('/api/admin', adminRoutes);
 const chatRoutes = require('./routes/chatRoutes');
 
 // Mount under /api so frontend requests like /api/stats/counts work
 app.use('/api/auth', authRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/chat', chatRoutes);
 
 // Import DB helpers and initialize WebSocket with them
