@@ -7,6 +7,7 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('token') || null); // <-- add this
   const [location, setLocation] = useState({
     lat: localStorage.getItem('userLat'),
     lng: localStorage.getItem('userLng'),
@@ -36,13 +37,16 @@ export function AuthProvider({ children }) {
         const decoded = JSON.parse(atob(token.split('.')[0]));
         setUser(decoded);
         setIsAuthenticated(true);
+        setToken(token); // <-- add this
       } catch (err) {
         setUser(null);
         setIsAuthenticated(false);
+        setToken(null); // <-- add this
       }
     } else {
       setUser(null);
       setIsAuthenticated(false);
+      setToken(null); // <-- add this
     }
   }, []);
 
@@ -51,6 +55,7 @@ export function AuthProvider({ children }) {
     const decoded = JSON.parse(atob(token.split('.')[1]));
     setUser(decoded);
     setIsAuthenticated(true);
+    setToken(token); // <-- add this
   };
 
   const logout = () => {
@@ -60,12 +65,14 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('userRole');
     setUser(null);
     setIsAuthenticated(false);
+    setToken(null); // <-- add this
   };
 
   return (
     <AuthContext.Provider value={{
       user,
       isAuthenticated,
+      token, // <-- add this
       login,
       logout,
       location,
