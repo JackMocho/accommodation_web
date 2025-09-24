@@ -28,7 +28,7 @@ export default function Login() {
       localStorage.setItem('userId', res.data.user.id);
       localStorage.setItem('userRole', res.data.user.role);
       localStorage.setItem('userName', res.data.user.full_name || res.data.user.name || '');
-      login(res.data.token);
+      login(res.data.token, res.data.user); // <-- pass both token and user
 
       // Redirect based on role
       if (res.data.user.role === 'admin') {
