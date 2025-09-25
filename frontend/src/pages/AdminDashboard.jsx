@@ -270,7 +270,7 @@ export default function AdminDashboard() {
         backgroundImage: `url(${bgImage})`,
       }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-purple-900/70 to-black/80 z-0"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-purple-900 to-blue-700 z-0"></div>
       <div className="relative z-10 max-w-7xl mx-auto p-6">
         <h1 className="text-4xl font-extrabold mb-8 text-white text-center drop-shadow-lg tracking-wide">
           Admin Dashboard

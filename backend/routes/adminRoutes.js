@@ -101,4 +101,16 @@ router.patch('/rental/:id/approve', authenticate, requireRole('admin'), async (r
   }
 });
 
+// Get all pending rentals (only those not approved)
+router.get('/pending-rentals', async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT * FROM rentals WHERE approved = false ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch pending rentals' });
+  }
+});
+
 module.exports = router;
