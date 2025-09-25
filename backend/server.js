@@ -32,16 +32,16 @@ expressRouter.prototype.use = function (firstArg, ...rest) {
 // CORS: allow origins set in env (comma-separated) or fallback to localhost for dev.
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 const allowedOrigins = [
-  'http://localhost:5173', // Vite default
+  'http://localhost:5173', // Vite dev server
   'http://127.0.0.1:5173',
-  // Add your deployed frontend URL here if needed, e.g.:
+  'https://accommodation-web-pyz9.onrender.com',
+  
   // 'https://your-frontend-domain.com'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // allow non-browser requests
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     } else {
