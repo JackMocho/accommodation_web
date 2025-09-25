@@ -17,7 +17,11 @@ export default function HomePage() {
       try {
         const res = await api.get('/stats/counts');
         // guard against undefined response shape
-        setStats(res?.data ?? { users: 0, rentals: 0 });
+        setStats({
+          users: res?.data?.totalUsers ?? 0,
+          rentals: res?.data?.totalRentals ?? 0,
+          activeRentals: res?.data?.activeRentals ?? 0,
+        });
       } catch (err) {
         console.error('Fetch stats error', err);
         // preserve defaults on error
