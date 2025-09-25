@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext'; // <-- add this import
 
 export default function SubmitRental() {
   const navigate = useNavigate();
-  const { token } = useAuth(); // <-- get token from context
+  const { token, user } = useAuth(); // <-- get token and user from context
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -101,18 +101,23 @@ export default function SubmitRental() {
       location = { type: 'Point', coordinates: [longitude, latitude] }; // GeoJSON standard
     }
 
+    // Use user.id for all owner/landlord fields
+    const ownerId = user?.id || localStorage.getItem('userId');
+
     const payload = {
       ...form,
-      coordinates: form.coordinates, // send as string
+      coordinates: form.coordinates,
       latitude,
       longitude,
-      location, // send as GeoJSON
-      landlord_id: userId,
+      location,
+      landlord_id: ownerId,
+      owner_id: ownerId,
+      user_id: ownerId,
     };
 
     try {
       await api.post('/rentals', payload, {
-        headers: { Authorization: `Bearer ${token}` } // <-- send token here
+        headers: { Authorization: `Bearer ${token}` }
       });
       setSuccessMsg('Rental submitted successfully!');
       setTimeout(() => {

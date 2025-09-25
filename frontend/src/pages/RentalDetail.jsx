@@ -24,8 +24,8 @@ export default function RentalDetail() {
         setRental(res.data);
 
         // Fetch landlord details if needed
-        if (res.data.owner_id) {
-          const userRes = await api.get(`/users/${res.data.owner_id}`);
+        if (res.data.user_id) {
+          const userRes = await api.get(`/users/${res.data.user_id}`);
           setLandlord(userRes.data);
         }
       } catch (err) {
@@ -40,15 +40,15 @@ export default function RentalDetail() {
   // For landlord: fetch clients who have messaged about this rental
   useEffect(() => {
     const fetchClients = async () => {
-      if (!rental || !decoded || decoded.id !== rental.owner_id) return;
+      if (!rental || !decoded || decoded.id !== rental.user_id) return;
       try {
         const res = await api.get(`/chat/messages/${id}`);
         // Get unique client IDs (exclude landlord)
         const clientIds = [
           ...new Set(
             res.data
-              .map(msg => (msg.sender_id !== rental.owner_id ? msg.sender_id : msg.receiver_id !== rental.owner_id ? msg.receiver_id : null))
-              .filter(cid => cid && cid !== rental.owner_id)
+              .map(msg => (msg.sender_id !== rental.user_id ? msg.sender_id : msg.receiver_id !== rental.user_id ? msg.receiver_id : null))
+              .filter(cid => cid && cid !== rental.user_id)
           ),
         ];
         // Fetch client details
@@ -86,7 +86,7 @@ export default function RentalDetail() {
 
   const lat = rental?.location?.coordinates?.[0];
   const lng = rental?.location?.coordinates?.[1];
-  const isLandlord = decoded && decoded.id === rental.owner_id;
+  const isLandlord = decoded && decoded.id === rental?.user_id;
 
   return (
     <div className="p-6 max-w-6xl mx-auto">

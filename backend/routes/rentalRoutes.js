@@ -20,7 +20,14 @@ router.get('/', async (req, res) => {
 // Create rental (authenticated users)
 router.post('/', authenticate, async (req, res) => {
   try {
-    const data = { ...req.body, owner_id: req.user.id }; // FIX: owner_id not owner_id
+    // Use the same value for all owner/landlord fields
+    const ownerId = req.user.id;
+    const data = {
+      ...req.body,
+      landlord_id: ownerId,
+      owner_id: ownerId,
+      user_id: ownerId,
+    };
     const rental = await db.insert('rentals', data, '*');
     res.json(rental);
   } catch (err) {
@@ -34,7 +41,11 @@ router.put('/:id', authenticate, async (req, res) => {
   try {
     const rental = await db.findOne('rentals', { id: req.params.id });
     if (!rental) return res.status(404).json({ error: 'Rental not found' });
-    if (rental.owner_id !== req.user.id && req.user.role !== 'admin') { // FIX: owner_id
+    // Accept any of the three fields for ownership check
+    const isOwner =
+      [rental.owner_id, rental.landlord_id, rental.user_id].includes(req.user.id) ||
+      req.user.role === 'admin';
+    if (!isOwner) {
       return res.status(403).json({ error: 'Not authorized' });
     }
     const updated = await db.update('rentals', { id: req.params.id }, req.body, '*');
@@ -53,15 +64,14 @@ router.patch('/:id/status', authenticate, async (req, res) => {
     if (!['booked', 'available'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
-    // Optionally, check if the user is owner or admin
     const rental = await db.findOne('rentals', { id: rentalId });
     if (!rental) return res.status(404).json({ error: 'Rental not found' });
 
-    // Only owner or admin can update
-    if (
-      req.user.role !== 'admin' &&
-      rental.owner_id !== req.user.id
-    ) {
+    // Accept any of the three fields for ownership check
+    const isOwner =
+      [rental.owner_id, rental.landlord_id, rental.user_id].includes(req.user.id) ||
+      req.user.role === 'admin';
+    if (!isOwner) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
@@ -78,7 +88,11 @@ router.delete('/:id', authenticate, async (req, res) => {
   try {
     const rental = await db.findOne('rentals', { id: req.params.id });
     if (!rental) return res.status(404).json({ error: 'Rental not found' });
-    if (rental.owner_id !== req.user.id && req.user.role !== 'admin') { // FIX: owner_id
+    // Accept any of the three fields for ownership check
+    const isOwner =
+      [rental.owner_id, rental.landlord_id, rental.user_id].includes(req.user.id) ||
+      req.user.role === 'admin';
+    if (!isOwner) {
       return res.status(403).json({ error: 'Not authorized' });
     }
     const deleted = await db.del('rentals', { id: req.params.id });
@@ -94,7 +108,11 @@ router.get('/user', authenticate, async (req, res) => {
   const userId = req.query.id;
   if (!userId) return res.status(400).json({ error: 'User ID required' });
   try {
-    const rentals = await db.findBy('rentals', { owner_id: userId }); // FIX: owner_id
+    // Fetch rentals where any of the three fields match
+    const rentals = await db.query(
+      `SELECT * FROM rentals WHERE owner_id = $1 OR landlord_id = $1 OR user_id = $1`,
+      [userId]
+    );
     res.json(rentals);
   } catch (err) {
     console.error(err);
