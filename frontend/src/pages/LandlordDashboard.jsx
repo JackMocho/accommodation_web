@@ -94,7 +94,7 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
 }
 
 export default function LandlordDashboard() {
-  const [rentals, setRentals] = useState([]);
+  const [rentals, setRentals] = useState([]); // Ensure default is an array
   const [editingRentalId, setEditingRentalId] = useState(null);
   const [showMessages, setShowMessages] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -127,13 +127,12 @@ export default function LandlordDashboard() {
   // Fetch rentals
   const fetchRentals = async () => {
     try {
-      const res = await api.get(`/rentals/user?id=${userId}`, {
+      const res = await api.get('/rentals/user?id=' + user.id, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setRentals(res.data || []);
+      setRentals(Array.isArray(res.data) ? res.data : []); // Always set as array
     } catch (err) {
-      console.error('Failed to load rentals:', err);
-      setRentals([]);
+      setRentals([]); // fallback to empty array on error
     }
   };
 
