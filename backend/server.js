@@ -31,13 +31,22 @@ expressRouter.prototype.use = function (firstArg, ...rest) {
 
 // CORS: allow origins set in env (comma-separated) or fallback to localhost for dev.
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
-const allowedOrigins = FRONTEND_ORIGIN.split(',').map(s => s.trim());
+const allowedOrigins = [
+  'http://localhost:5173', // Vite default
+  'http://127.0.0.1:5173',
+  // Add your deployed frontend URL here if needed, e.g.:
+  // 'https://your-frontend-domain.com'
+];
+
 app.use(cors({
-  origin: (origin, callback) => {
-    // allow non-browser tools (no origin) and allowed origins
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true,
 }));
