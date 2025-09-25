@@ -13,6 +13,7 @@ export default function RentalDetail() {
   const [landlord, setLandlord] = useState(null);
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
   const decoded = token ? JSON.parse(atob(token.split('.')[0])) : null;
 
   // Load rental details on mount
@@ -23,8 +24,8 @@ export default function RentalDetail() {
         setRental(res.data);
 
         // Fetch landlord details if needed
-        if (res.data.user_id) {
-          const userRes = await api.get(`/users/${res.data.user_id}`);
+        if (res.data.owner_id) {
+          const userRes = await api.get(`/users/${res.data.owner_id}`);
           setLandlord(userRes.data);
         }
       } catch (err) {
@@ -39,15 +40,15 @@ export default function RentalDetail() {
   // For landlord: fetch clients who have messaged about this rental
   useEffect(() => {
     const fetchClients = async () => {
-      if (!rental || !decoded || decoded.id !== rental.user_id) return;
+      if (!rental || !decoded || decoded.id !== rental.owner_id) return;
       try {
         const res = await api.get(`/chat/messages/${id}`);
         // Get unique client IDs (exclude landlord)
         const clientIds = [
           ...new Set(
             res.data
-              .map(msg => (msg.sender_id !== rental.user_id ? msg.sender_id : msg.receiver_id !== rental.user_id ? msg.receiver_id : null))
-              .filter(cid => cid && cid !== rental.user_id)
+              .map(msg => (msg.sender_id !== rental.owner_id ? msg.sender_id : msg.receiver_id !== rental.owner_id ? msg.receiver_id : null))
+              .filter(cid => cid && cid !== rental.owner_id)
           ),
         ];
         // Fetch client details
@@ -64,10 +65,28 @@ export default function RentalDetail() {
     fetchClients();
   }, [rental, decoded, id]);
 
+  // Handler to change rental status
+  const handleStatusChange = async (newStatus) => {
+    if (!token) return;
+    setStatusLoading(true);
+    try {
+      const res = await api.patch(
+        `/rentals/${id}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRental(res.data);
+    } catch (err) {
+      alert('Failed to update status');
+    }
+    setStatusLoading(false);
+  };
+
   if (!rental) return <div>Loading...</div>;
 
   const lat = rental?.location?.coordinates?.[0];
   const lng = rental?.location?.coordinates?.[1];
+  const isLandlord = decoded && decoded.id === rental.owner_id;
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -124,6 +143,28 @@ export default function RentalDetail() {
           </span>
         </div>
 
+        {isLandlord && (
+          <div className="mb-4">
+            {rental.status === 'booked' ? (
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mr-2"
+                onClick={() => handleStatusChange('available')}
+                disabled={statusLoading}
+              >
+                {statusLoading ? 'Updating...' : 'Mark as Available'}
+              </button>
+            ) : (
+              <button
+                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded mr-2"
+                onClick={() => handleStatusChange('booked')}
+                disabled={statusLoading}
+              >
+                {statusLoading ? 'Updating...' : 'Mark as Booked'}
+              </button>
+            )}
+          </div>
+        )}
+
         {rental.location && (
           <div className="mt-4">
             <strong>Location:</strong>
@@ -134,8 +175,8 @@ export default function RentalDetail() {
       {/* Chat Section */}
       <section className="mt-8">
         <h3 className="text-xl font-semibold mb-4">Contact Landlord</h3>
-        {decoded && decoded.id !== rental.user_id ? (
-          <Chat rentalId={rental.id} userId={decoded.id} landlordId={rental.user_id} />
+        {decoded && decoded.id !== rental.owner_id ? (
+          <Chat rentalId={rental.id} userId={decoded.id} landlordId={rental.owner_id} />
         ) : (
           <>
             <p className="text-gray-500 mb-2">You are the owner. Select a client to reply:</p>
@@ -161,7 +202,7 @@ export default function RentalDetail() {
               <Chat
                 rentalId={rental.id}
                 userId={decoded.id}
-                landlordId={rental.user_id}
+                landlordId={rental.owner_id}
                 clientId={selectedClient.id}
                 isLandlord={true}
               />
