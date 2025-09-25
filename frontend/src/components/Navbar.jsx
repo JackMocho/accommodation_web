@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import bgGeo from '../assets/geo5.jpg';
 
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -13,8 +14,20 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-purple-900 via-blue-900 to-gray-900 shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <nav
+      className="shadow-lg sticky top-0 z-50"
+      style={{
+        backgroundImage: `url(${bgGeo})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        // Optional: overlay for readability
+        position: 'relative',
+      }}
+    >
+      {/* Overlay for dark tint */}
+      <div className="absolute inset-0  z-0 pointer-events-none"></div>
+      <div className="relative max-w-7xl mx-auto px-4 py-3 flex items-center justify-between z-10">
         {/* Logo & Brand */}
         <Link to="/" className="flex items-center gap-2 group">
           <span className="text-2xl font-extrabold text-purple-400 group-hover:scale-110 transition-transform duration-300">🏠</span>
@@ -23,7 +36,6 @@ export default function Navbar() {
 
         <div className="flex gap-6 items-center">
           {/* Navigation Links */}
-        
           {isAuthenticated && user?.role === 'admin' && (
             <Link to="/admin" className="hover:text-blue-400 transition">
               Admin
@@ -50,12 +62,11 @@ export default function Navbar() {
               <Link to="/register" className="px-4 py-1 rounded bg-purple-700 hover:bg-purple-600 text-white font-semibold shadow transition">Sign Up</Link>
             </>
           )}
-          
+
           {/* Profile Dropdown */}
           {isAuthenticated && (
             <div className="relative group">
               <button className="flex items-center gap-2 focus:outline-none">
-                {/* Show full_name or name */}
                 <span className="text-white font-semibold">
                   {user?.full_name || user?.name || 'Profile'}
                 </span>

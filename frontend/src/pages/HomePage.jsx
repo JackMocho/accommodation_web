@@ -1,220 +1,299 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
+
+// Import all images for the hero background carousel
+import img1 from '../assets/image1.jpg';
+import img2 from '../assets/image2.jpg';
+import img3 from '../assets/image3.jpg';
+import img4 from '../assets/image4.jpg';
+import img5 from '../assets/image5.jpg';
+import img6 from '../assets/image6.jpg';
+import img7 from '../assets/image7.jpg';
+import img8 from '../assets/image8.jpg';
+import img9 from '../assets/image9.jpg';
+import img10 from '../assets/image10.jpg';
+import img11 from '../assets/image11.jpg';
+import img12 from '../assets/image12.jpg';
+import img13 from '../assets/image13.jpg';
+import img14 from '../assets/image14.jpg';
+import img15 from '../assets/image15.jpg';
+import img16 from '../assets/image16.jpg';
+import img17 from '../assets/image17.jpg';
+import img18 from '../assets/image18.jpg';
+import img19 from '../assets/image19.jpg';
+import img20 from '../assets/image20.jpg';
+import img21 from '../assets/image21.jpg';
+import img22 from '../assets/image22.jpg';
+import img23 from '../assets/image23.jpg';
+import img24 from '../assets/image24.jpg';
+
+const heroImages = [
+  img1, img2, img3, img4, img5, img6, img7, img8, img9, img10, img11, img12,
+  img13, img14, img15, img16, img17, img18, img19, img20, img21, img22, img23, img24
+];
 
 export default function HomePage() {
   const [stats, setStats] = useState({
     users: 0,
     rentals: 0,
+    activeRentals: 0,
   });
   const [randomRentals, setRandomRentals] = useState([]);
   const [propertyType, setPropertyType] = useState('all');
   const [rentals, setRentals] = useState([]);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const heroInterval = useRef(null);
+
+  // Auto-scroll hero background images
+  useEffect(() => {
+    heroInterval.current = setInterval(() => {
+      setHeroIndex(idx => (idx + 1) % heroImages.length);
+    }, 3500);
+    return () => clearInterval(heroInterval.current);
+  }, []);
 
   // Fetch stats on load
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const res = await api.get('/stats/counts');
-        // guard against undefined response shape
         setStats({
-          users: res?.data?.totalUsers ?? 0,
-          rentals: res?.data?.totalRentals ?? 0,
+          users: res?.data?.users ?? 0,
+          rentals: res?.data?.rentals ?? 0,
           activeRentals: res?.data?.activeRentals ?? 0,
         });
       } catch (err) {
-        console.error('Fetch stats error', err);
-        // preserve defaults on error
+        // error handling
       }
     };
     fetchStats();
   }, []);
 
-  // Fetch rentals and filter by property type and status === 'available' or 'booked'
+  // Fetch rentals and filter by property type and status === 'available'
   useEffect(() => {
     const fetchRentals = async () => {
       try {
         const res = await api.get('/rentals');
-        // Only show rentals with status 'available'
         const filteredRentals = res.data.filter(
           r => r.status === 'available'
         );
         setRentals(filteredRentals);
         setRandomRentals(filteredRentals.slice(0, 6));
       } catch (err) {
-        // handle error
+        // error handling
       }
     };
     fetchRentals();
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-gray-900 text-white">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 px-4">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 -left-32 w-96 h-96 bg-purple-700 opacity-30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-700 opacity-30 rounded-full blur-3xl animate-pulse"></div>
-        </div>
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 drop-shadow-lg transition-all duration-500 hover:scale-105">
-            Find Your <span className="text-purple-400">Dream Accommodation</span> Now!
-          </h1>
-          <p className="text-lg md:text-2xl mb-10 text-gray-200 font-light">
-            Discover, advertise, and locate rentals and AirBnBs with a vibrant, efficient, secure community at your comfort.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-6">
+    <div className="relative min-h-screen w-full overflow-x-hidden">
+      {/* Hero Background Carousel */}
+      <div className="fixed inset-0 z-0">
+        {heroImages.map((img, idx) => (
+          <img
+            key={idx}
+            src={img}
+            alt=""
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+              idx === heroIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
+            style={{
+              filter: 'brightness(0.45) blur(1.5px)',
+              transition: 'opacity 1s',
+            }}
+            aria-hidden="true"
+            draggable={false}
+          />
+        ))}
+      </div>
+
+      {/* Overlay for color tint */}
+      <div className="fixed inset-0 z-10  pointer-events-none"></div>
+
+      <main className="relative z-20">
+        {/* Hero Section */}
+        <section className="relative py-24 px-4 flex flex-col items-center justify-center min-h-[60vh]">
+          {/* Section-specific background image */}
+          <div
+            className="absolute inset-0 w-full h-full z-0 rounded-3xl"
+            style={{
+              backgroundImage: `url(${img13})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'brightness(0.5) blur(1px)',
+            }}
+            aria-hidden="true"
+          ></div>
+          {/* Overlay for readability */}
+          <div className="absolute inset-0  z-10 rounded-3xl"></div>
+          <div className="max-w-4xl mx-auto text-center relative z-20">
+            <h1 className="text-5xl md:text-7xl font-extrabold mb-8 drop-shadow-2xl text-white tracking-tight leading-tight animate-fade-in-up">
+              Find Your <span className="text-purple-400 bg-white/10 px-2 rounded-lg shadow-lg">Dream Accommodation</span> Now!
+            </h1>
+            <p className="text-xl md:text-2xl mb-12 text-gray-200 font-light drop-shadow-lg">
+              Discover, advertise, and locate rentals and AirBnBs with a vibrant, efficient, secure community at your comfort.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-6">
+              <Link
+                to="/register"
+                className="px-10 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-2xl text-xl font-semibold transform transition hover:scale-105 hover:from-yellow-400 hover:to-pink-500 hover:shadow-3xl duration-300"
+              >
+                Get Started
+              </Link>
+              <Link
+                to="/login"
+                className="px-10 py-4 bg-gradient-to-r from-green-600 to-blue-700 rounded-2xl shadow-2xl text-xl font-semibold transform transition hover:scale-105 hover:from-blue-400 hover:to-green-500 hover:shadow-3xl duration-300"
+              >
+                Login
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Listings Carousel */}
+        <section className="py-16 px-4  rounded-t-3xl shadow-2xl mt-[-3rem]">
+          <div className="max-w-5xl mx-auto">
+            <h3 className="text-3xl font-bold mb-8 text-center text-purple-300 tracking-wide drop-shadow-lg">
+              <span className="inline-block animate-bounce">🏡</span> Featured Listings
+            </h3>
+            <div className="flex justify-center mb-8">
+              <select
+                value={propertyType}
+                onChange={e => setPropertyType(e.target.value)}
+                className="bg-gray-800/80 text-white px-6 py-3 rounded-lg border border-purple-700 shadow-lg focus:ring-2 focus:ring-purple-400 transition"
+              >
+                <option value="all">All Types</option>
+                <option value="rental">Rental (Monthly)</option>
+                <option value="lodging">Lodging / AirBnB (Nightly)</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
+              {randomRentals.map((rental, idx) => (
+                <div
+                  key={idx}
+                  className="bg-gray-600 rounded-2xl shadow-xl p-5 flex flex-col items-center transform transition hover:scale-105 hover:shadow-2xl duration-300 group border-2 border-transparent hover:border-yellow-400"
+                >
+                  {rental.images && rental.images.length > 0 && (
+                    <img
+                      src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
+                      alt="Rental"
+                      className="w-full h-48 object-cover rounded-xl mb-4 transition-transform duration-300 group-hover:scale-105 shadow-lg"
+                    />
+                  )}
+                  <h4 className="text-xl font-bold mb-1 text-white group-hover:text-purple-300 transition">
+                    {rental.title}
+                  </h4>
+                  <p className="text-gray-300 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
+                  {rental.mode === 'lodging' ? (
+                    <span className="bg-green-700 text-white px-4 py-1 rounded text-sm shadow">
+                      KES {rental.nightly_price}/night
+                    </span>
+                  ) : (
+                    <span className="bg-blue-700 text-white px-4 py-1 rounded text-sm shadow">
+                      KES {rental.price}/month
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-center mt-12">
             <Link
               to="/register"
-              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg text-lg font-semibold transform transition hover:scale-105 hover:from-yellow-400 hover:to-pink-500 hover:shadow-2xl duration-300"
+              className="px-10 py-4 bg-gradient-to-r from-purple-600 to-yellow-500 rounded-2xl shadow-xl text-xl font-semibold transform transition hover:scale-110 hover:from-yellow-400 hover:to-pink-500 hover:shadow-3xl duration-300"
             >
-              Get Started
-            </Link>
-            <Link
-              to="/login"
-              className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-700 rounded-xl shadow-lg text-lg font-semibold transform transition hover:scale-105 hover:from-blue-400 hover:to-green-500 hover:shadow-2xl duration-300"
-            >
-              Login
+              Register to Locate Now
             </Link>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Featured Listings Carousel */}
-      <section className="py-12 px-4 bg-gradient-to-br from-gray-900 via-blue-950 to-purple-900">
-        <div className="max-w-5xl mx-auto">
-          <h3 className="text-2xl font-bold mb-6 text-center text-purple-300 tracking-wide">
-            <span className="inline-block animate-bounce">🏡</span> Featured Listings
-          </h3>
-          <div className="flex justify-center mb-8">
-            <select
-              value={propertyType}
-              onChange={e => setPropertyType(e.target.value)}
-              className="bg-gray-800 text-white px-4 py-2 rounded border border-purple-700 shadow transition focus:ring-2 focus:ring-purple-400"
-            >
-              <option value="all">All Types</option>
-              <option value="rental">Rental (Monthly)</option>
-              <option value="lodging">Lodging / AirBnB (Nightly)</option>
-            </select>
+        
+
+        {/* How It Works */}
+        <section className="py-20 px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-4xl font-bold mb-12 text-center tracking-wide text-purple-300 drop-shadow-lg">How It Works</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+              <StepCard
+                number="1"
+                title="Register or Login"
+                description="Create an account or log in with your credentials."
+                icon="📝"
+              />
+              <StepCard
+                number="2"
+                title="List Your Property"
+                description="Use our location picker or town input to list your rental."
+                icon="🏠"
+              />
+              <StepCard
+                number="3"
+                title="Browse & Chat"
+                description="Clients can contact landlords directly via Secure chat."
+                icon="💬"
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            {randomRentals.map((rental, idx) => (
-              <div
-                key={idx}
-                className="bg-gray-800 rounded-xl shadow-lg p-4 flex flex-col items-center transform transition hover:scale-105 hover:shadow-2xl duration-300 group"
-              >
-                {rental.images && rental.images.length > 0 && (
-                  <img
-                    src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
-                    alt="Rental"
-                    className="w-full h-44 object-cover rounded-lg mb-3 transition-transform duration-300 group-hover:scale-105"
-                  />
-                )}
-                <h4 className="text-lg font-bold mb-1 text-white group-hover:text-purple-300 transition blur">
-                  {rental.title}
-                </h4>
-                <p className="text-gray-400 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
-                {rental.mode === 'lodging' ? (
-                  <span className="bg-green-700 text-white px-3 py-1 rounded text-sm shadow">
-                    KES {rental.nightly_price}/night
-                  </span>
-                ) : (
-                  <span className="bg-blue-700 text-white px-3 py-1 rounded text-sm shadow">
-                    KES {rental.price}/month
-                  </span>
-                )}
-              </div>
-            ))}
+        </section>
+                    {/* Stats Section */}
+        <section
+          className="py-16 px-4 rounded-b-3xl shadow-2xl relative overflow-hidden"
+          style={{
+            backgroundImage: `url(${img20})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          {/* Overlay for readability */}
+          <div className="absolute inset-0  z-0"></div>
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 text-center relative z-10">
+            <StatCard label="Total Users" value={stats?.users ?? 0} />
+            <StatCard label="Total Rentals" value={stats?.rentals ?? 0} />
+            <StatCard label="Active Listings" value={stats?.activeRentals ?? 0} />
           </div>
-        </div>
-        <div className="flex justify-center mt-10">
-          <Link
-            to="/register"
-            className="px-8 py-3 bg-gradient-to-r from-purple-600 to-yellow-500 rounded-xl shadow-lg text-lg font-semibold transform transition hover:scale-110 hover:from-yellow-400 hover:to-pink-500 hover:shadow-2xl duration-300"
-          >
-            Register to Locate Now
-          </Link>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-14 px-4 bg-gradient-to-t from-blue-800 via-blue-700 to-purple-400">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <StatCard label="Total Users" value={stats?.users ?? 0} />
-          <StatCard label="Total Rentals" value={stats?.rentals ?? 0} />
-          <StatCard label="Active Listings" value={stats?.rentals ?? 0} />
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-10 text-center tracking-wide text-purple-300">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <StepCard
-              number="1"
-              title="Register or Login"
-              description="Create an account or log in with your credentials."
-              icon="📝"
-            />
-            <StepCard
-              number="2"
-              title="List Your Property"
-              description="Use our location picker or town input to list your rental."
-              icon="🏠"
-            />
-            <StepCard
-              number="3"
-              title="Browse & Chat"
-              description="Clients can contact landlords directly via Secure chat."
-              icon="💬"
-            />
+        </section>
+        {/* Features */}
+        <section className="py-20 px-4 bg-gradient-to-br from-gray-800/90 via-blue-900/90 to-purple-900/90">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-4xl font-bold mb-12 text-center text-purple-200 drop-shadow-lg">Why Choose Us?</h2>
+            <ul className="space-y-7 text-xl">
+              <li className="flex items-center gap-4">
+                <span className="text-3xl animate-pulse">🔐</span>
+                <span>End-to-end encrypted chatting. Security first!</span>
+              </li>
+              <li className="flex items-center gap-4">
+                <span className="text-3xl animate-bounce">📡</span>
+                <span>Real-time chat between clients and landlords</span>
+              </li>
+              <li className="flex items-center gap-4">
+                <span className="text-3xl animate-spin-slow">📷</span>
+                <span>Image preview before upload – no surprises</span>
+              </li>
+              <li className="flex items-center gap-4">
+                <span className="text-3xl animate-pulse">🔒</span>
+                <span>Admin dashboard for system management</span>
+              </li>
+              <li className="flex items-center gap-4">
+                <span className="text-3xl animate-bounce">🗺️</span>
+                <span>Satellite map with GIS-powered filtering</span>
+              </li>
+              <li className="flex items-center gap-4">
+                <span className="text-3xl animate-bounce">💬</span>
+                <a
+                  href="https://wa.me/254745420900"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-400 underline hover:text-green-300 transition"
+                >
+                  For Inquiries: Message us on WhatsApp
+                </a>
+              </li>
+            </ul>
           </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-16 px-4 bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-10 text-center text-purple-200">Why Choose Us?</h2>
-          <ul className="space-y-5 text-lg">
-            <li className="flex items-center gap-3">
-              <span className="text-2xl animate-pulse">🔐</span>
-              <span>End-to-end encrypted chatting. Security first!</span>
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="text-2xl animate-bounce">📡</span>
-              <span>Real-time chat between clients and landlords</span>
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="text-2xl animate-spin-slow">📷</span>
-              <span>Image preview before upload – no surprises</span>
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="text-2xl animate-pulse">🔒</span>
-              <span>Admin dashboard for system management</span>
-            </li>
-            <li className="flex items-center gap-3">
-              <span className="text-2xl animate-bounce">🗺️</span>
-              <span>Satellite map with GIS-powered filtering</span>
-            </li>
-            {/* Add For Inquiries WhatsApp link */}
-            <li className="flex items-center gap-3">
-              <span className="text-2xl animate-bounce">💬</span>
-              <a
-                href="https://wa.me/254745420900"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-green-400 underline hover:text-green-300 transition"
-              >
-                For Inquiries: Message us on WhatsApp
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-     
+        </section>
+      </main>
     </div>
   );
 }
@@ -223,20 +302,20 @@ export default function HomePage() {
 
 function StatCard({ label, value }) {
   return (
-    <div className="bg-gray-700 p-8 rounded-xl shadow-lg border-2 border-purple-600 transform transition hover:scale-105 hover:border-yellow-400 duration-300">
-      <h3 className="text-3xl md:text-4xl font-bold text-yellow-300 mb-2">{value}</h3>
-      <p className="mt-2 text-gray-200 text-lg">{label}</p>
+    <div className="bg-gray-700/90 p-10 rounded-2xl shadow-xl border-2 border-purple-600 transform transition hover:scale-105 hover:border-yellow-400 duration-300">
+      <h3 className="text-4xl md:text-5xl font-bold text-yellow-300 mb-3">{value}</h3>
+      <p className="mt-2 text-gray-200 text-xl">{label}</p>
     </div>
   );
 }
 
 function StepCard({ number, title, description, icon }) {
   return (
-    <div className="bg-gray-700 p-8 rounded-xl shadow-lg text-center transform transition hover:scale-105 hover:bg-purple-700 duration-300">
-      <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-blue-600 text-white font-bold rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
+    <div className="bg-gray-700/90 p-10 rounded-2xl shadow-xl text-center transform transition hover:scale-105 hover:bg-purple-700/90 duration-300">
+      <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 text-white font-bold rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-lg">
         {icon || number}
       </div>
-      <h4 className="font-semibold text-2xl mb-2">{title}</h4>
+      <h4 className="font-semibold text-2xl mb-3">{title}</h4>
       <p className="text-gray-200">{description}</p>
     </div>
   );
