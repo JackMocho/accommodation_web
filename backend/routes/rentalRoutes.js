@@ -108,11 +108,10 @@ router.get('/user', authenticate, async (req, res) => {
   let userId = req.query.id;
   if (!userId) return res.status(400).json({ error: 'User ID required' });
   try {
-    // Ensure userId is an integer for SQL comparison
-    userId = parseInt(userId, 10);
+    userId = parseInt(userId, 10); // <-- Ensure userId is an integer
     if (isNaN(userId)) return res.status(400).json({ error: 'Invalid User ID' });
 
-    // Fetch rentals where any of the three fields match (all integer columns)
+    // Now userId is an integer, so this works:
     const rentals = await db.query(
       `SELECT * FROM rentals WHERE owner_id = $1 OR landlord_id = $1 OR user_id = $1`,
       [userId]
