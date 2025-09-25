@@ -91,8 +91,8 @@ export default function SubmitRental() {
     let latitude = null, longitude = null;
     if (form.coordinates) {
       const [latStr, lngStr] = form.coordinates.split(',').map(s => s.trim());
-      latitude = parseFloat(latStr);
-      longitude = parseFloat(lngStr);
+      latitude = latStr !== '' ? parseFloat(latStr) : null;
+      longitude = lngStr !== '' ? parseFloat(lngStr) : null;
     }
 
     // Always send location as GeoJSON [lng, lat] for backend/PostGIS
@@ -104,8 +104,14 @@ export default function SubmitRental() {
     // Use user.id for all owner/landlord fields
     const ownerId = user?.id || localStorage.getItem('userId');
 
+    // Ensure numeric fields are numbers or null, not empty string
+    const price = form.price === '' ? null : Number(form.price);
+    const nightly_price = form.nightly_price === '' ? null : Number(form.nightly_price);
+
     const payload = {
       ...form,
+      price,
+      nightly_price,
       coordinates: form.coordinates,
       latitude,
       longitude,
