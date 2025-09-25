@@ -1,7 +1,6 @@
 const express = require('express');
 const db = require('../config/db');
 const { authenticate } = require('../middleware/authMiddleware');
-
 const router = express.Router();
 
 // Get messages for a conversation (conversation_id)
@@ -44,6 +43,21 @@ router.get('/messages/recent/:userId', authenticate, async (req, res) => {
     res.json(messages.rows);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Get all messages for a rental (by rentalId)
+router.get('/messages/:rentalId', authenticate, async (req, res) => {
+  const rentalId = parseInt(req.params.rentalId, 10);
+  if (isNaN(rentalId)) return res.status(400).json({ error: 'Invalid rental ID' });
+  try {
+    const messages = await db.query(
+      'SELECT * FROM messages WHERE rental_id = $1 ORDER BY created_at ASC',
+      [rentalId]
+    );
+    res.json(messages.rows);
+  } catch (err) {
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
