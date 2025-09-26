@@ -56,10 +56,16 @@ router.delete('/users/:id', authenticate, requireRole('admin'), async (req, res)
   }
 });
 
-// Get all rentals
+// Get all rentals (with optional approved filter)
 router.get('/rentals', authenticate, requireRole('admin'), async (req, res) => {
   try {
-    const rentals = (await db.query('SELECT * FROM rentals')).rows;
+    let query = 'SELECT * FROM rentals';
+    const values = [];
+    if (typeof req.query.approved !== 'undefined') {
+      query += ' WHERE approved = $1';
+      values.push(req.query.approved === 'true');
+    }
+    const rentals = (await db.query(query, values)).rows;
     res.json(rentals);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch rentals' });

@@ -347,22 +347,24 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {pendingRentals.length === 0 ? (
+                {pendingRentals.filter(r => r.approved === false).length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center p-4 text-gray-200">No pending rentals.</td>
                   </tr>
                 ) : (
-                  pendingRentals.map(r => (
-                    <tr key={r.id} className="hover:bg-purple-800/40 transition">
-                      <td className="p-2">{r.title}</td>
-                      <td className="p-2">{r.town}</td>
-                      <td className="p-2">{r.owner_name || r.owner_id}</td>
-                      <td className="p-2">
-                        <button onClick={() => handleApproveRental(r.id)} className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded mr-2 text-white shadow transition">Approve</button>
-                        <button onClick={() => handleDeleteRental(r.id)} className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white shadow transition">Delete</button>
-                      </td>
-                    </tr>
-                  ))
+                  pendingRentals
+                    .filter(r => r.approved === false)
+                    .map(r => (
+                      <tr key={r.id} className="hover:bg-purple-800/40 transition">
+                        <td className="p-2">{r.title}</td>
+                        <td className="p-2">{r.town}</td>
+                        <td className="p-2">{r.owner_name || r.owner_id}</td>
+                        <td className="p-2">
+                          <button onClick={() => handleApproveRental(r.id)} className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded mr-2 text-white shadow transition">Approve</button>
+                          <button onClick={() => handleDeleteRental(r.id)} className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white shadow transition">Delete</button>
+                        </td>
+                      </tr>
+                    ))
                 )}
               </tbody>
             </table>
