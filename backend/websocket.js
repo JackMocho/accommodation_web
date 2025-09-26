@@ -2,7 +2,8 @@ const WebSocket = require('ws');
 
 function initWebsocket(server, dbClient) {
   const db = dbClient || require('./config/db');
-  const wss = new WebSocket.Server({ server });
+  // Attach to /ws path
+  const wss = new WebSocket.Server({ server, path: '/ws' });
 
   wss.on('connection', (ws) => {
     ws.on('message', async (raw) => {
@@ -18,7 +19,6 @@ function initWebsocket(server, dbClient) {
             message,
             created_at: new Date()
           };
-          // insert returns the inserted row (using config/db.insert)
           const saved = await db.insert('messages', payloadRow, '*');
           const payload = JSON.stringify({ type: 'new_message', message: saved });
           wss.clients.forEach(client => {

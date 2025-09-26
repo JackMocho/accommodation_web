@@ -124,15 +124,16 @@ export default function LandlordDashboard() {
   // Debugging: Log the JWT token on every render
   console.log('JWT token in localStorage:', localStorage.getItem('token'));
 
-  // Fetch rentals
+  // Fetch rentals for this landlord
   const fetchRentals = async () => {
     try {
-      const res = await api.get('/rentals/user?id=' + user.id, {
+      // Use the landlord's user id to fetch only their rentals
+      const res = await api.get(`/rentals/user?id=${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setRentals(Array.isArray(res.data) ? res.data : []); // Always set as array
+      setRentals(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      setRentals([]); // fallback to empty array on error
+      setRentals([]);
     }
   };
 
