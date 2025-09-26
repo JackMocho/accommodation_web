@@ -62,4 +62,13 @@ router.get('/messages/:rentalId', authenticate, async (req, res) => {
   }
 });
 
+// Send a message
+router.post('/send', authenticate, async (req, res) => {
+  // Your message sending logic here
+  // Example:
+  // const { rentalId, senderId, receiverId, message } = req.body;
+  // Save to DB, then:
+  res.json({ success: true });
+});
+
 module.exports = router;
