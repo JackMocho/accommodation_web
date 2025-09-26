@@ -99,6 +99,8 @@ export default function ClientDashboard() {
       try {
         const res = await api.get('/rentals');
         let filtered = res.data;
+        // Only include rentals with status === 'available'
+        filtered = filtered.filter(r => r.status === 'available');
         if (propertyType !== 'all') {
           filtered = filtered.filter(r => r.mode === propertyType);
         }
