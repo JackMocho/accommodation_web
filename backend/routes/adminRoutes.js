@@ -7,7 +7,9 @@ const router = express.Router();
 // List users (PROTECT THIS ROUTE)
 router.get('/users', authenticate, requireRole('admin'), async (req, res) => {
   try {
-    const rows = (await db.query('SELECT id, email, full_name, role, approved, suspended, created_at FROM users ORDER BY created_at DESC;')).rows;
+    const rows = (await db.query(
+      'SELECT id, email, full_name, name, phone, role, town, approved, suspended, created_at FROM users ORDER BY created_at DESC;'
+    )).rows;
     res.json(rows);
   } catch (err) {
     console.error('Admin list users error', err);

@@ -436,7 +436,7 @@ export default function AdminDashboard() {
                       <td className="p-2">{u.email}</td>
                       <td className="p-2">{u.phone}</td>
                       <td className="p-2">{u.role}</td>
-                      <td className="p-2">{u.town}</td>
+                      <td className="p-2">{u.town || 'N/A'}</td>
                       <td className="p-2">
                         <button onClick={() => handleSuspendUser(u.id)} className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded mr-2 text-white shadow transition">Suspend</button>
                         <button onClick={() => handleDeleteUser(u.id)} className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded mr-2 text-white shadow transition">Delete</button>
