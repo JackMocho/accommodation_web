@@ -370,7 +370,7 @@ export default function ClientDashboard() {
                   <button
                     className="bg-gradient-to-r from-blue-700 to-purple-700 text-white px-3 py-1 rounded mt-2 font-semibold hover:from-yellow-400 hover:to-pink-500 hover:scale-105 transition-all duration-300"
                     onClick={e => {
-                      e.stopPropagation();
+                      e.stopPropagation(); // Prevent card click
                       setShowChat(true);
                       setChatRental(rental);
                     }}

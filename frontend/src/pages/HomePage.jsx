@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
 // Import all images for the hero background carousel
@@ -44,6 +45,7 @@ export default function HomePage() {
   const [rentals, setRentals] = useState([]);
   const [heroIndex, setHeroIndex] = useState(0);
   const heroInterval = useRef(null);
+  const { isAuthenticated } = useAuth();
 
   // Auto-scroll hero background images
   useEffect(() => {
@@ -182,8 +184,13 @@ export default function HomePage() {
                       className="w-full h-48 object-cover rounded-xl mb-4 transition-transform duration-300 group-hover:scale-105 shadow-lg"
                     />
                   )}
-                  <h4 className="text-xl font-bold mb-1 text-white group-hover:text-purple-300 transition">
-                    {rental.title}
+                  <h4
+                    className={`text-xl font-bold mb-1 text-white group-hover:text-purple-300 transition ${
+                      !isAuthenticated ? 'blur-sm select-none pointer-events-none' : ''
+                    }`}
+                    title={!isAuthenticated ? 'Login to view title' : rental.title}
+                  >
+                    {!isAuthenticated ? 'Login to view title' : rental.title}
                   </h4>
                   <p className="text-gray-300 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
                   {rental.mode === 'lodging' ? (
@@ -255,7 +262,7 @@ export default function HomePage() {
           </div>
         </section>
         {/* Features */}
-        <section className="py-20 px-4 bg-gradient-to-br from-gray-800/90 via-blue-900/90 to-purple-900/90">
+        <section className="py-20 px-4 ">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold mb-12 text-center text-purple-200 drop-shadow-lg">Why Choose Us?</h2>
             <ul className="space-y-7 text-xl">
