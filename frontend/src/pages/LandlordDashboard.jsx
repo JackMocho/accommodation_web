@@ -1,7 +1,7 @@
 // filepath: d:\Real property App\frontend\src\pages\LandlordDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import useSocket from '../hooks/useSocket';
+// import useSocket from '../hooks/useSocket'; // REMOVE THIS LINE
 import NotificationBell from '../components/NotificationBell';
 import api from '../utils/api';
 import axios from 'axios';
@@ -109,9 +109,11 @@ export default function LandlordDashboard() {
   const [chatMessages, setChatMessages] = useState([]);
   const [selectedRental, setSelectedRental] = useState(null);
   const [showChat, setShowChat] = useState(false);
+  const [inboxMessages, setInboxMessages] = useState([]); // New state for inbox messages
 
   // Default notifications to [] in case hook returns undefined
-  const { notifications = [], clearNotifications } = useSocket();
+  // REMOVE this line:
+  // const { notifications = [], clearNotifications } = useSocket();
 
   const { user, token } = useAuth();
   const userId = user?.id || localStorage.getItem('userId');
@@ -189,6 +191,21 @@ export default function LandlordDashboard() {
     // eslint-disable-next-line
   }, [token]);
 
+  // Fetch inbox messages periodically
+  useEffect(() => {
+    let intervalId;
+    if (user?.id) {
+      const fetchMessages = () => {
+        api.get(`/chat/messages/recent/${user.id}`)
+          .then(res => setInboxMessages(res.data))
+          .catch(() => setInboxMessages([]));
+      };
+      fetchMessages();
+      intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
+    }
+    return () => clearInterval(intervalId);
+  }, [user]);
+
   // Delete rental handler
   const handleDeleteRental = async (id) => {
     if (!window.confirm('Are you sure you want to delete this rental?')) return;
@@ -262,11 +279,7 @@ export default function LandlordDashboard() {
             onClick={() => setShowMessages((v) => !v)}
           >
             Messages
-            {notifications?.length > 0 && (
-              <span className="ml-2 bg-red-500 text-white rounded-full px-2 text-xs">
-                {notifications.length}
-              </span>
-            )}
+            {/* Remove or replace notifications badge */}
           </button>
           <button
             className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow text-lg ml-4"
@@ -276,7 +289,7 @@ export default function LandlordDashboard() {
           </button>
         </div>
         <div className="flex gap-2 items-center">
-          <NotificationBell notifications={notifications} clearNotifications={clearNotifications} />
+          <NotificationBell notifications={[]} clearNotifications={() => {}} />
         </div>
 
         {showAdminChat && (
@@ -354,7 +367,8 @@ export default function LandlordDashboard() {
                             {" "}→ {msg.receiver_name || msg.receiver_id}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {new Date(msg.created_at).toLocaleString()}
+                            {new Date(msg.created_at).toLocaleString()
+                            }
                           </span>
                         </div>
                         <div className="text-sm text-gray-200 mt-1">{msg.message}</div>

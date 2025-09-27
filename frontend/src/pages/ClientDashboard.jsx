@@ -123,12 +123,18 @@ export default function ClientDashboard() {
   );
 
   useEffect(() => {
-    if (showInbox && user?.id) {
-      api.get(`/chat/messages/recent/${user.id}`)
-        .then(res => setInboxMessages(res.data))
-        .catch(() => setInboxMessages([]));
+    let intervalId;
+    if (user?.id) {
+      const fetchMessages = () => {
+        api.get(`/chat/messages/recent/${user.id}`)
+          .then(res => setInboxMessages(res.data))
+          .catch(() => setInboxMessages([]));
+      };
+      fetchMessages();
+      intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
     }
-  }, [showInbox, user]);
+    return () => clearInterval(intervalId);
+  }, [user]);
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden flex flex-col">
