@@ -1,4 +1,4 @@
-// filepath: d:\Real property App\frontend\src\pages\LandlordDashboard.jsx
+// filepath: d:\PROJECTS\Rentals fullstack\frontend\src\pages\LandlordDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // import useSocket from '../hooks/useSocket'; // REMOVE THIS LINE
@@ -129,8 +129,9 @@ export default function LandlordDashboard() {
 
   // Fetch rentals for this landlord (user)
   const fetchRentals = async () => {
-    setLoadingRentals(true); // Start loading
+    setLoadingRentals(true);
     try {
+      console.log('Fetching rentals for user:', user?.id); // Debug log
       if (!user?.id) {
         setRentals([]);
         setLoadingRentals(false);
@@ -139,6 +140,7 @@ export default function LandlordDashboard() {
       const res = await api.get(`/rentals/user?id=${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('Rentals response:', res.data); // Debug log
       const userRentals = Array.isArray(res.data)
         ? res.data.filter(r => String(r.user_id) === String(user.id))
         : [];
@@ -146,7 +148,7 @@ export default function LandlordDashboard() {
     } catch (err) {
       setRentals([]);
     }
-    setLoadingRentals(false); // End loading
+    setLoadingRentals(false);
   };
 
   // Fetch recent messages for landlord
