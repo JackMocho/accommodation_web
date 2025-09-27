@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import api from '../utils/api';
 import useAutoLocation from '../hooks/useAutoLocation';
 import { useNavigate } from 'react-router-dom';
-import bgImage from '../assets/image24.jpg';
+import bgImage from '../assets/image1.jpg'; // Use the new captivating background
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -10,7 +10,7 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'client', // must be one of: client, landlord, admin
+    role: 'client',
     town: '',
     latitude: '',
     longitude: '',
@@ -52,8 +52,6 @@ export default function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
-    // require full_name, email, password, phone and role
     if (
       !form.full_name?.trim() ||
       !form.email?.trim() ||
@@ -64,11 +62,9 @@ export default function Register() {
     ) {
       return alert('Please provide Full Name, Email, Password, Confirm Password, Phone and Role.');
     }
-
     if (form.password !== form.confirmPassword) {
       return alert('Passwords do not match.');
     }
-
     try {
       const payload = {
         full_name: form.full_name.trim(),
@@ -86,10 +82,8 @@ export default function Register() {
             ? undefined
             : Number(form.longitude),
       };
-
       const res = await api.post('/auth/register', payload);
       alert(res.data?.message || 'Registration successful!');
-
       navigate('/login');
     } catch (err) {
       const serverMsg = err.response?.data?.error || err.response?.data?.message;
@@ -100,27 +94,28 @@ export default function Register() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
-      {/* Background image */}
+      {/* Background image with captivating overlay */}
       <div
         className="absolute inset-0 z-0 bg-cover bg-center"
         style={{
           backgroundImage: `url(${bgImage})`,
-          filter: 'brightness(0.45) blur(2px)',
         }}
         aria-hidden="true"
-      ></div>
-      {/* Overlay */}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/70 via-black/60 to-yellow-700/60 backdrop-blur-sm"></div>
+      </div>
+      {/* Overlay for extra depth */}
       <div className="absolute inset-0 z-10 pointer-events-none"></div>
 
       <form
         onSubmit={handleRegister}
-        className="relative z-20 backdrop-blur-md p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-lg space-y-6 border-2 border-purple-700"
+        className="relative z-20 backdrop-blur-xl bg-white/10 p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-lg space-y-8 border-2 border-yellow-400"
       >
-        <h2 className="text-4xl font-extrabold text-center mb-4 text-white drop-shadow-lg">
-          Create Your Account
+        <h2 className="text-5xl font-extrabold text-center mb-4 text-yellow-300 drop-shadow-xl tracking-wide">
+          Join Rentals Today
         </h2>
-        <p className="text-center text-gray-300 mb-6 text-lg">
-          Join our vibrant rental community today!
+        <p className="text-center text-purple-100 mb-8 text-lg font-medium">
+          Discover your next home or list your property with ease!
         </p>
 
         <input
@@ -130,7 +125,7 @@ export default function Register() {
           onChange={handleChange}
           placeholder="Full Name"
           required
-          className="w-full p-3 rounded-lg bg-gray-800 text-white border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          className="w-full p-4 rounded-xl bg-gray-900/80 text-yellow-100 border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition shadow-lg"
         />
 
         <input
@@ -140,7 +135,7 @@ export default function Register() {
           value={form.email}
           onChange={handleChange}
           required
-          className="w-full p-3 rounded-lg bg-gray-800 text-white border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          className="w-full p-4 rounded-xl bg-gray-900/80 text-yellow-100 border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition shadow-lg"
         />
 
         <input
@@ -150,7 +145,7 @@ export default function Register() {
           value={form.phone}
           onChange={handleChange}
           required
-          className="w-full p-3 rounded-lg bg-gray-800 text-white border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          className="w-full p-4 rounded-xl bg-gray-900/80 text-yellow-100 border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition shadow-lg"
         />
 
         {/* Password Field with Show/Hide */}
@@ -162,12 +157,12 @@ export default function Register() {
             value={form.password}
             onChange={handleChange}
             required
-            className="w-full p-3 rounded-lg bg-gray-800 text-white border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition pr-16"
+            className="w-full p-4 rounded-xl bg-gray-900/80 text-yellow-100 border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition pr-16 shadow-lg"
           />
           <button
             type="button"
             tabIndex={-1}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-yellow-300 transition"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-400 hover:text-purple-300 transition font-bold"
             onClick={() => setShowPassword((v) => !v)}
           >
             {showPassword ? 'Hide' : 'Show'}
@@ -183,12 +178,12 @@ export default function Register() {
             value={form.confirmPassword}
             onChange={handleChange}
             required
-            className="w-full p-3 rounded-lg bg-gray-800 text-white border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition pr-16"
+            className="w-full p-4 rounded-xl bg-gray-900/80 text-yellow-100 border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition pr-16 shadow-lg"
           />
           <button
             type="button"
             tabIndex={-1}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-yellow-300 transition"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-400 hover:text-purple-300 transition font-bold"
             onClick={() => setShowConfirm((v) => !v)}
           >
             {showConfirm ? 'Hide' : 'Show'}
@@ -200,7 +195,7 @@ export default function Register() {
           value={form.role}
           onChange={handleChange}
           required
-          className="w-full p-3 rounded-lg bg-gray-800 text-white border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          className="w-full p-4 rounded-xl bg-gray-900/80 text-yellow-100 border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition shadow-lg"
         >
           <option value="client">Client</option>
           <option value="landlord">Landlord / Caretaker</option>
@@ -213,17 +208,17 @@ export default function Register() {
           placeholder="Town"
           value={form.town}
           onChange={handleChange}
-          className="p-3 rounded-lg bg-gray-800 text-white w-full border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition"
+          className="p-4 rounded-xl bg-gray-900/80 text-yellow-100 w-full border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition shadow-lg"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="number"
             name="latitude"
             placeholder="Latitude"
             value={form.latitude}
             onChange={handleChange}
-            className="p-3 rounded-lg bg-gray-800 text-white w-full border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition"
+            className="p-4 rounded-xl bg-gray-900/80 text-yellow-100 w-full border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition shadow-lg"
             step="any"
           />
           <input
@@ -232,7 +227,7 @@ export default function Register() {
             placeholder="Longitude"
             value={form.longitude}
             onChange={handleChange}
-            className="p-3 rounded-lg bg-gray-800 text-white w-full border border-purple-700 focus:ring-2 focus:ring-purple-400 outline-none transition"
+            className="p-4 rounded-xl bg-gray-900/80 text-yellow-100 w-full border-2 border-yellow-400 focus:ring-2 focus:ring-yellow-400 outline-none transition shadow-lg"
             step="any"
           />
         </div>
@@ -240,21 +235,21 @@ export default function Register() {
         <button
           type="button"
           onClick={handleGeolocate}
-          className="mt-2 w-full bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-white font-semibold shadow transition"
+          className="mt-2 w-full bg-gradient-to-r from-purple-700 via-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-purple-700 px-3 py-3 rounded-xl text-white font-semibold shadow-xl transition-all duration-300"
         >
           Use My Location
         </button>
 
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-green-600 to-purple-600 hover:from-yellow-400 hover:to-pink-500 text-white py-3 rounded-lg text-xl font-bold shadow-lg hover:scale-105 transition-all duration-300"
+          className="w-full bg-gradient-to-r from-yellow-400 via-purple-600 to-purple-900 hover:from-purple-700 hover:to-yellow-400 text-white py-4 rounded-2xl text-2xl font-extrabold shadow-2xl hover:scale-105 transition-all duration-300 mt-4"
         >
           Register
         </button>
 
-        <p className="mt-4 text-center text-lg text-gray-300">
+        <p className="mt-6 text-center text-lg text-yellow-100">
           Already have an account?{' '}
-          <a href="/login" className="text-blue-400 underline hover:text-yellow-300 transition">
+          <a href="/login" className="text-purple-300 underline hover:text-yellow-400 transition font-bold">
             Login
           </a>
         </p>
