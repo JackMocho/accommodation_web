@@ -94,7 +94,8 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
 }
 
 export default function LandlordDashboard() {
-  const [rentals, setRentals] = useState([]); // Ensure default is an array
+  const [rentals, setRentals] = useState([]);
+  const [loadingRentals, setLoadingRentals] = useState(false); // Add loading state
   const [editingRentalId, setEditingRentalId] = useState(null);
   const [showMessages, setShowMessages] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -126,17 +127,26 @@ export default function LandlordDashboard() {
   // Debugging: Log the JWT token on every render
   console.log('JWT token in localStorage:', localStorage.getItem('token'));
 
-  // Fetch rentals for this landlord
+  // Fetch rentals for this landlord (user)
   const fetchRentals = async () => {
+    setLoadingRentals(true); // Start loading
     try {
-      // Use the landlord's user id to fetch only their rentals
+      if (!user?.id) {
+        setRentals([]);
+        setLoadingRentals(false);
+        return;
+      }
       const res = await api.get(`/rentals/user?id=${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setRentals(Array.isArray(res.data) ? res.data : []);
+      const userRentals = Array.isArray(res.data)
+        ? res.data.filter(r => String(r.user_id) === String(user.id))
+        : [];
+      setRentals(userRentals);
     } catch (err) {
       setRentals([]);
     }
+    setLoadingRentals(false); // End loading
   };
 
   // Fetch recent messages for landlord
@@ -189,7 +199,7 @@ export default function LandlordDashboard() {
     fetchMessages();
     fetchAllChats();
     // eslint-disable-next-line
-  }, [token]);
+  }, [token, user?.id]);
 
   // Fetch inbox messages periodically
   useEffect(() => {
@@ -419,7 +429,9 @@ export default function LandlordDashboard() {
       {/* Rentals Section */}
       <section className="mb-8">
         <h3 className="text-xl font-semibold mb-4">Your Rentals</h3>
-        {visibleRentals.length === 0 ? (
+        {loadingRentals ? (
+          <div className="text-center text-yellow-300 font-bold text-lg py-8">Loading...</div>
+        ) : visibleRentals.length === 0 ? (
           <p className="text-gray-500">No rentals found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
