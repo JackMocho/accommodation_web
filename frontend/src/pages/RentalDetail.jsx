@@ -19,8 +19,18 @@ export default function RentalDetail() {
   // Load rental details on mount
   useEffect(() => {
     const fetchRental = async () => {
+      // Defensive: ensure id is a number or string, not undefined or malformed
+      if (!id || isNaN(Number(id))) {
+        navigate('/dashboard');
+        return;
+      }
       try {
         const res = await api.get(`/rentals/${id}`);
+        if (!res.data || Object.keys(res.data).length === 0) {
+          // Rental not found
+          navigate('/dashboard');
+          return;
+        }
         setRental(res.data);
 
         // Fetch landlord details if needed

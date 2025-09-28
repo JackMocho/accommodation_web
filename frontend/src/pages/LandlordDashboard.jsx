@@ -1,10 +1,8 @@
 // filepath: d:\PROJECTS\Rentals fullstack\frontend\src\pages\LandlordDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import useSocket from '../hooks/useSocket'; // REMOVE THIS LINE
 import NotificationBell from '../components/NotificationBell';
 import api from '../utils/api';
-import axios from 'axios';
 import MapComponent from '../components/MapComponent';
 import Chat from '../components/Chat';
 import { useAuth } from '../context/AuthContext';
@@ -95,7 +93,7 @@ function RentalCard({ rental, onDelete, onEdit, onBook, onMakeAvailable }) {
 
 export default function LandlordDashboard() {
   const [rentals, setRentals] = useState([]);
-  const [loadingRentals, setLoadingRentals] = useState(false); // Add loading state
+  const [loadingRentals, setLoadingRentals] = useState(false);
   const [editingRentalId, setEditingRentalId] = useState(null);
   const [showMessages, setShowMessages] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -112,10 +110,6 @@ export default function LandlordDashboard() {
   const [showChat, setShowChat] = useState(false);
   const [inboxMessages, setInboxMessages] = useState([]); // New state for inbox messages
 
-  // Default notifications to [] in case hook returns undefined
-  // REMOVE this line:
-  // const { notifications = [], clearNotifications } = useSocket();
-
   const { user, token } = useAuth();
   const userId = user?.id || localStorage.getItem('userId');
   const userName = user?.full_name || user?.name || localStorage.getItem('userName') || '';
@@ -124,51 +118,39 @@ export default function LandlordDashboard() {
   const adminUserId = '1';
   const navigate = useNavigate();
 
-  // Debugging: Log the JWT token on every render
-  console.log('JWT token in localStorage:', localStorage.getItem('token'));
-
   // Fetch rentals for this landlord (user)
-  const fetchRentals = async () => {
-    setLoadingRentals(true);
-    try {
-      // Always use userId as integer for backend compatibility
-      const id = user?.id || localStorage.getItem('userId');
-      if (!id) {
+  useEffect(() => {
+    const fetchRentals = async () => {
+      setLoadingRentals(true);
+      try {
+        // Fetch all rentals, then filter by user_id
+        const res = await api.get('/rentals', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        let data = res.data;
+        // Defensive: parse images if needed and ensure array
+        if (Array.isArray(data)) {
+          data = data
+            .filter(r => r.user_id === Number(userId)) // Only rentals owned by landlord
+            .map(r => ({
+              ...r,
+              images: Array.isArray(r.images)
+                ? r.images
+                : (typeof r.images === 'string' && r.images.startsWith('['))
+                  ? JSON.parse(r.images)
+                  : [],
+            }));
+        } else {
+          data = [];
+        }
+        setRentals(data);
+      } catch (err) {
         setRentals([]);
-        setLoadingRentals(false);
-        return;
       }
-      // Ensure id is integer for backend
-      const userIdInt = parseInt(id, 10);
-      if (isNaN(userIdInt)) {
-        setRentals([]);
-        setLoadingRentals(false);
-        return;
-      }
-      // Use correct API path and Authorization header
-      const res = await api.get(`/rentals/user?id=${userIdInt}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      let data = res.data;
-      // Defensive: parse images if needed and ensure array
-      if (Array.isArray(data)) {
-        data = data.map(r => ({
-          ...r,
-          images: Array.isArray(r.images)
-            ? r.images
-            : (typeof r.images === 'string' && r.images.startsWith('['))
-              ? JSON.parse(r.images)
-              : [],
-        }));
-      } else {
-        data = [];
-      }
-      setRentals(data);
-    } catch (err) {
-      setRentals([]);
-    }
-    setLoadingRentals(false);
-  };
+      setLoadingRentals(false);
+    };
+    if (userId && token) fetchRentals();
+  }, [token, userId]);
 
   // Fetch recent messages for landlord
   const fetchMessages = async () => {
