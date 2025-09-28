@@ -131,20 +131,39 @@ export default function LandlordDashboard() {
   const fetchRentals = async () => {
     setLoadingRentals(true);
     try {
-      console.log('Fetching rentals for user:', user?.id); // Debug log
-      if (!user?.id) {
+      // Always use userId as integer for backend compatibility
+      const id = user?.id || localStorage.getItem('userId');
+      if (!id) {
         setRentals([]);
         setLoadingRentals(false);
         return;
       }
-      const res = await api.get(`/rentals/user?id=${user.id}`, {
+      // Ensure id is integer for backend
+      const userIdInt = parseInt(id, 10);
+      if (isNaN(userIdInt)) {
+        setRentals([]);
+        setLoadingRentals(false);
+        return;
+      }
+      // Use correct API path and Authorization header
+      const res = await api.get(`/rentals/user?id=${userIdInt}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Rentals response:', res.data); // Debug log
-      const userRentals = Array.isArray(res.data)
-        ? res.data.filter(r => String(r.user_id) === String(user.id))
-        : [];
-      setRentals(userRentals);
+      let data = res.data;
+      // Defensive: parse images if needed and ensure array
+      if (Array.isArray(data)) {
+        data = data.map(r => ({
+          ...r,
+          images: Array.isArray(r.images)
+            ? r.images
+            : (typeof r.images === 'string' && r.images.startsWith('['))
+              ? JSON.parse(r.images)
+              : [],
+        }));
+      } else {
+        data = [];
+      }
+      setRentals(data);
     } catch (err) {
       setRentals([]);
     }
@@ -277,7 +296,9 @@ export default function LandlordDashboard() {
   };
 
   // Only show available and booked rentals
-  const visibleRentals = rentals.filter(r => r.status === 'available' || r.status === 'booked');
+  const visibleRentals = rentals.filter(
+    r => r.status === 'available' || r.status === 'booked'
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-blue-900 to-purple-900">
