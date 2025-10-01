@@ -118,39 +118,36 @@ export default function LandlordDashboard() {
   const adminUserId = '1';
   const navigate = useNavigate();
 
-  // Fetch rentals for this landlord (user)
-  useEffect(() => {
-    const fetchRentals = async () => {
-      setLoadingRentals(true);
-      try {
-        // Fetch all rentals, then filter by user_id
-        const res = await api.get('/rentals', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        let data = res.data;
-        // Defensive: parse images if needed and ensure array
-        if (Array.isArray(data)) {
-          data = data
-            .filter(r => r.user_id === Number(userId)) // Only rentals owned by landlord
-            .map(r => ({
-              ...r,
-              images: Array.isArray(r.images)
-                ? r.images
-                : (typeof r.images === 'string' && r.images.startsWith('['))
-                  ? JSON.parse(r.images)
-                  : [],
-            }));
-        } else {
-          data = [];
-        }
-        setRentals(data);
-      } catch (err) {
-        setRentals([]);
+  // Move fetchRentals OUTSIDE useEffect so it's accessible everywhere
+  const fetchRentals = async () => {
+    setLoadingRentals(true);
+    try {
+      // Fetch all rentals, then filter by user_id
+      const res = await api.get('/rentals', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      let data = res.data;
+      // Defensive: parse images if needed and ensure array
+      if (Array.isArray(data)) {
+        data = data
+          .filter(r => r.user_id === Number(userId)) // Only rentals owned by landlord
+          .map(r => ({
+            ...r,
+            images: Array.isArray(r.images)
+              ? r.images
+              : (typeof r.images === 'string' && r.images.startsWith('['))
+                ? JSON.parse(r.images)
+                : [],
+          }));
+      } else {
+        data = [];
       }
-      setLoadingRentals(false);
-    };
-    if (userId && token) fetchRentals();
-  }, [token, userId]);
+      setRentals(data);
+    } catch (err) {
+      setRentals([]);
+    }
+    setLoadingRentals(false);
+  };
 
   // Fetch recent messages for landlord
   const fetchMessages = async () => {
