@@ -32,4 +32,19 @@ router.get('/', authenticate, requireRole('admin'), async (req, res) => {
   }
 });
 
+// Get user by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await db.findOne('users', { id: userId });
+    if (!user) {
+      return res.status(404).json({});
+    }
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
 module.exports = router;
