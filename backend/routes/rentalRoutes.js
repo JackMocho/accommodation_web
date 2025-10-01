@@ -139,4 +139,19 @@ router.put('/:id/book', authenticate, async (req, res) => {
   }
 });
 
+// Get rental by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const rentalId = req.params.id;
+    const rental = await db.findOne('rentals', { id: rentalId });
+    if (!rental) {
+      return res.status(404).json({});
+    }
+    res.json(rental);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch rental' });
+  }
+});
+
 module.exports = router;
