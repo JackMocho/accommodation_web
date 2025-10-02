@@ -84,6 +84,7 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true);
   const [propertyType, setPropertyType] = useState('all');
   const [searchTown, setSearchTown] = useState('');
+  const [sortPrice, setSortPrice] = useState('none'); // <-- Add sort state
   const [showChat, setShowChat] = useState(false);
   const [chatRental, setChatRental] = useState(null);
   const [showInbox, setShowInbox] = useState(false);
@@ -99,8 +100,8 @@ export default function ClientDashboard() {
       try {
         const res = await api.get('/rentals');
         let filtered = res.data;
-        // Only include rentals with status === 'available'
-        filtered = filtered.filter(r => r.status === 'available');
+        // Only include rentals with status === 'available' and approved === true
+        filtered = filtered.filter(r => r.status === 'available' && r.approved === true);
         if (propertyType !== 'all') {
           filtered = filtered.filter(r => r.mode === propertyType);
         }
@@ -109,6 +110,14 @@ export default function ClientDashboard() {
             r.town && r.town.toLowerCase().includes(searchTown.trim().toLowerCase())
           );
         }
+        // Sort by price if selected
+        if (sortPrice === 'asc') {
+          filtered = filtered.slice().sort((a, b) => {
+            const priceA = a.mode === 'lodging' ? a.nightly_price : a.price;
+            const priceB = b.mode === 'lodging' ? b.nightly_price : b.price;
+            return (priceA ?? 0) - (priceB ?? 0);
+          });
+        }
         setAvailableRentals(filtered);
       } catch (err) {
         setAvailableRentals([]);
@@ -116,7 +125,7 @@ export default function ClientDashboard() {
       setLoading(false);
     };
     fetchAvailableRentals();
-  }, [propertyType, searchTown]);
+  }, [propertyType, searchTown, sortPrice]);
 
   const rentalsWithLocation = availableRentals.filter(
     r => r.location && Array.isArray(r.location.coordinates) && r.location.coordinates.length === 2
@@ -274,6 +283,14 @@ export default function ClientDashboard() {
               placeholder="Search by town..."
               className="bg-gray-800 text-white px-4 py-2 rounded border border-purple-700 shadow focus:ring-2 focus:ring-purple-400"
             />
+            <select
+              value={sortPrice}
+              onChange={e => setSortPrice(e.target.value)}
+              className="bg-gray-800 text-white px-4 py-2 rounded border border-purple-700 shadow focus:ring-2 focus:ring-purple-400"
+            >
+              <option value="none">Sort: Default</option>
+              <option value="asc">Lowest Price First</option>
+            </select>
           </div>
 
           <div className="mb-8">

@@ -98,6 +98,12 @@ export default function RentalDetail() {
   const lng = rental?.location?.coordinates?.[1];
   const isLandlord = decoded && decoded.id === rental?.user_id;
 
+  // WhatsApp link construction
+  const landlordPhone = landlord?.phone;
+  const whatsappLink = landlordPhone
+    ? `https://wa.me/${landlordPhone.replace(/^0/, '254')}` // assumes Kenyan numbers, adjust as needed
+    : null;
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Rental Title */}
@@ -185,6 +191,18 @@ export default function RentalDetail() {
       {/* Chat Section */}
       <section className="mt-8">
         <h3 className="text-xl font-semibold mb-4">Contact Landlord</h3>
+        {whatsappLink ? (
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded inline-block mb-4"
+          >
+            Chat with Landlord on WhatsApp
+          </a>
+        ) : (
+          <p className="text-gray-400 mb-4">Landlord phone not available.</p>
+        )}
         {decoded && decoded.id !== rental.owner_id ? (
           <Chat rentalId={rental.id} userId={decoded.id} landlordId={rental.owner_id} />
         ) : (

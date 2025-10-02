@@ -43,12 +43,12 @@ export default function Navbar() {
           )}
           {isAuthenticated && user?.role === 'landlord' && (
             <Link to="/landlord-dashboard" className="hover:text-blue-400 transition">
-              Landlord Dashboard
+              Dashboard
             </Link>
           )}
           {isAuthenticated && user?.role === 'client' && (
             <Link to="/client-dashboard" className="hover:text-blue-400 transition">
-              Client Dashboard
+              Dashboard
             </Link>
           )}
           {/* Authentication Buttons */}
