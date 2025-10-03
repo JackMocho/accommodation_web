@@ -289,7 +289,7 @@ export default function ClientDashboard() {
               className="bg-gray-800 text-white px-4 py-2 rounded border border-purple-700 shadow focus:ring-2 focus:ring-purple-400"
             >
               <option value="none">Sort: Default</option>
-              <option value="asc">Lowest Price First</option>
+              <option value="asc">Price: Lowest to Highest</option>
             </select>
           </div>
 
