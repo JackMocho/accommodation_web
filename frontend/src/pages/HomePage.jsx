@@ -254,11 +254,11 @@ export default function HomePage() {
               </li>
               <li className="flex items-center gap-4">
                 <span className="text-3xl animate-spin-slow">📷</span>
-                <span>Image preview before upload – no surprises</span>
+                <span>Property preview before contact – no surprises</span>
               </li>
               <li className="flex items-center gap-4">
                 <span className="text-3xl animate-pulse">🔒</span>
-                <span>Admin dashboard for system management</span>
+                <span> Access to variety of properties for perfect experience</span>
               </li>
               <li className="flex items-center gap-4">
                 <span className="text-3xl animate-bounce">🗺️</span>

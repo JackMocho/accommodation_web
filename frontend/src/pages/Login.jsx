@@ -63,7 +63,7 @@ export default function Login() {
         className="relative z-20 backdrop-blur-md p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-md space-y-6 border-2 border-purple-700"
       >
         <h2 className="text-4xl font-extrabold text-center mb-4 text-white drop-shadow-lg">
-          Welcome Back
+          Welcome
         </h2>
         <p className="text-center text-gray-300 mb-6 text-lg">
           Sign in to your account to continue

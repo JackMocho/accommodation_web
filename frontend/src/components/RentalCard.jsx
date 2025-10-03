@@ -1,9 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MapComponent from './MapComponent';
+import api from '../utils/api';
 
 const RentalCard = ({ rental, onDelete, onEdit, actionButton }) => {
   const navigate = useNavigate();
+  const [landlordPhone, setLandlordPhone] = useState(null);
+
+  // Fetch landlord phone using user_id
+  useEffect(() => {
+    async function fetchLandlordPhone() {
+      if (!rental.user_id) return;
+      try {
+        const res = await api.get(`/users/${rental.user_id}`);
+        if (res.data && res.data.phone) {
+          setLandlordPhone(res.data.phone);
+        }
+      } catch (err) {
+        setLandlordPhone(null);
+      }
+    }
+    fetchLandlordPhone();
+  }, [rental.user_id]);
+
+  // WhatsApp link construction
+  const whatsappLink = landlordPhone
+    ? `https://wa.me/${landlordPhone.replace(/^0/, '254')}` // assumes Kenyan numbers
+    : null;
 
   // For each rental:
   const lat = rental.location.coordinates[0];
@@ -44,6 +67,17 @@ const RentalCard = ({ rental, onDelete, onEdit, actionButton }) => {
       )}
       <div className="flex gap-2 mt-2">
         {actionButton}
+        {whatsappLink && (
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
+            title="Chat with Landlord on WhatsApp"
+          >
+            Chat with Landlord
+          </a>
+        )}
       </div>
     </div>
   );

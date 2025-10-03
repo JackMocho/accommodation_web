@@ -112,7 +112,7 @@ export default function Register() {
         className="relative z-20 backdrop-blur-xl bg-white/10 p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-lg space-y-8 border-2 border-yellow-400"
       >
         <h2 className="text-5xl font-extrabold text-center mb-4 text-yellow-300 drop-shadow-xl tracking-wide">
-          Join Rentals Today
+          Join Accommodation Hub Today
         </h2>
         <p className="text-center text-purple-100 mb-8 text-lg font-medium">
           Discover your next home or list your property with ease!
