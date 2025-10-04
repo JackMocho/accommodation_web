@@ -3,7 +3,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import MapComponent from '../components/MapComponent';
-import Chat from '../components/Chat';
 import { useAuth } from '../context/AuthContext';
 import bgGeo from '../assets/geo5.jpg';
 
@@ -84,13 +83,8 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true);
   const [propertyType, setPropertyType] = useState('all');
   const [searchTown, setSearchTown] = useState('');
-  const [sortPrice, setSortPrice] = useState('none'); // <-- Add sort state
-  const [showChat, setShowChat] = useState(false);
-  const [chatRental, setChatRental] = useState(null);
-  const [showInbox, setShowInbox] = useState(false);
-  const [inboxMessages, setInboxMessages] = useState([]);
-  const [activeTab, setActiveTab] = useState('inbox');
-  const [replyThread, setReplyThread] = useState(null);
+  const [sortPrice, setSortPrice] = useState('none');
+  const [landlordPhones, setLandlordPhones] = useState({}); // rentalId: phone
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -100,7 +94,6 @@ export default function ClientDashboard() {
       try {
         const res = await api.get('/rentals');
         let filtered = res.data;
-        // Only include rentals with status === 'available' and approved === true
         filtered = filtered.filter(r => r.status === 'available' && r.approved === true);
         if (propertyType !== 'all') {
           filtered = filtered.filter(r => r.mode === propertyType);
@@ -110,7 +103,6 @@ export default function ClientDashboard() {
             r.town && r.town.toLowerCase().includes(searchTown.trim().toLowerCase())
           );
         }
-        // Sort by price if selected
         if (sortPrice === 'asc') {
           filtered = filtered.slice().sort((a, b) => {
             const priceA = a.mode === 'lodging' ? a.nightly_price : a.price;
@@ -127,27 +119,33 @@ export default function ClientDashboard() {
     fetchAvailableRentals();
   }, [propertyType, searchTown, sortPrice]);
 
+  // Fetch landlord phones for all rentals
+  useEffect(() => {
+    async function fetchPhones() {
+      const phoneMap = {};
+      for (const rental of availableRentals) {
+        if (rental.user_id) {
+          try {
+            const res = await api.get(`/users/${rental.user_id}`);
+            if (res.data && res.data.phone) {
+              phoneMap[rental.id] = res.data.phone;
+            }
+          } catch {
+            phoneMap[rental.id] = null;
+          }
+        }
+      }
+      setLandlordPhones(phoneMap);
+    }
+    if (availableRentals.length > 0) fetchPhones();
+  }, [availableRentals]);
+
   const rentalsWithLocation = availableRentals.filter(
     r => r.location && Array.isArray(r.location.coordinates) && r.location.coordinates.length === 2
   );
 
-  useEffect(() => {
-    let intervalId;
-    if (user?.id) {
-      const fetchMessages = () => {
-        api.get(`/chat/messages/recent/${user.id}`)
-          .then(res => setInboxMessages(res.data))
-          .catch(() => setInboxMessages([]));
-      };
-      fetchMessages();
-      intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
-    }
-    return () => clearInterval(intervalId);
-  }, [user]);
-
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden flex flex-col">
-      {/* Background image */}
       <div
         className="fixed inset-0 z-0 bg-cover bg-center"
         style={{
@@ -156,110 +154,9 @@ export default function ClientDashboard() {
         }}
         aria-hidden="true"
       ></div>
-      {/* Overlay */}
       <div className="fixed inset-0 z-10 pointer-events-none"></div>
 
       <main className="relative z-20 w-full max-w-7xl mx-auto px-4 py-8">
-        {/* View Messages Button */}
-        {user && (
-          <div className="mb-4 flex justify-end">
-            <button
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-xl shadow-lg font-semibold hover:from-yellow-400 hover:to-pink-500 hover:scale-105 transition-all duration-300"
-              onClick={() => {
-                setShowInbox(true);
-                setActiveTab('inbox');
-                setReplyThread(null);
-              }}
-            >
-              View Messages
-            </button>
-          </div>
-        )}
-
-        {/* Inbox/Reply Modal */}
-        {showInbox && user && (
-          <div className="fixed inset-0 z-[1000] flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black bg-opacity-80 z-[1000] pointer-events-auto"
-              onClick={() => setShowInbox(false)}
-            />
-            {/* Modal */}
-            <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-2 z-[1010] flex flex-col border-2 border-purple-700">
-              <button
-                className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
-                onClick={() => setShowInbox(false)}
-              >
-                &times;
-              </button>
-              <div className="flex border-b border-gray-200">
-                <button
-                  className={`flex-1 py-2 text-center font-semibold rounded-tl-3xl ${activeTab === 'inbox' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-700'}`}
-                  onClick={() => {
-                    setActiveTab('inbox');
-                    setReplyThread(null);
-                  }}
-                >
-                  Inbox
-                </button>
-                <button
-                  className={`flex-1 py-2 text-center font-semibold rounded-tr-3xl ${activeTab === 'reply' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-700'}`}
-                  disabled={!replyThread}
-                >
-                  Reply
-                </button>
-              </div>
-              <div className="p-4 overflow-y-auto max-h-[70vh]">
-                {activeTab === 'inbox' && (
-                  <>
-                    <h3 className="font-semibold mb-4 text-lg">Your Messages</h3>
-                    {inboxMessages.length === 0 ? (
-                      <p className="text-gray-500">No messages found.</p>
-                    ) : (
-                      <ul className="space-y-3">
-                        {inboxMessages.map((msg, idx) => (
-                          <li
-                            key={idx}
-                            className="border-b border-gray-200 pb-2 cursor-pointer hover:bg-blue-50 rounded transition"
-                            onClick={() => {
-                              setReplyThread({
-                                rentalId: msg.rental_id,
-                                receiverId: msg.sender_id === user.id ? msg.receiver_id : msg.sender_id,
-                                rentalTitle: msg.rental_title || msg.title || msg.rental_id,
-                              });
-                              setActiveTab('reply');
-                            }}
-                          >
-                            <div className="text-sm">
-                              <span className="font-bold">{msg.sender_id === user.id ? 'You' : 'Landlord'}:</span>{' '}
-                              {msg.message}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Rental: <span className="font-semibold">{msg.rental_title || msg.title || msg.rental_id}</span> | {new Date(msg.created_at).toLocaleString()}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
-                )}
-                {activeTab === 'reply' && replyThread && (
-                  <div>
-                    <h3 className="font-semibold mb-2 text-lg">
-                      Chat for Rental: <span className="text-blue-700">{replyThread.rentalTitle}</span>
-                    </h3>
-                    <Chat
-                      userId={user.id}
-                      rentalId={replyThread.rentalId}
-                      receiverId={replyThread.receiverId}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         <h2 className="text-3xl md:text-4xl font-extrabold mb-8 text-white drop-shadow-lg text-center tracking-tight">
           Client Dashboard
         </h2>
@@ -320,90 +217,97 @@ export default function ClientDashboard() {
             <p className="text-gray-300 text-center">No available rentals or lodgings found.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {availableRentals.map(rental => (
-                <div
-                  key={rental.id}
-                  className="bg-white/90 rounded-2xl shadow-xl p-5 flex flex-col mb-6 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 outline-none border-2 border-transparent hover:border-yellow-400"
-                  tabIndex={0}
-                  role="button"
-                  onClick={() => navigate(`/rentals/${rental.id}`)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      navigate(`/rentals/${rental.id}`);
-                    }
-                  }}
-                  title="Click to view full details"
-                >
-                  <h4 className="font-bold text-lg mb-1 text-blue-900">{rental.title}</h4>
-                  {rental.images && rental.images.length > 0 && (
-                    <ImageCarousel
-                      images={Array.isArray(rental.images) ? rental.images : JSON.parse(rental.images)}
-                      alt={rental.title}
-                    />
-                  )}
-                  <p className="text-gray-700 text-sm mb-2">{rental.description}</p>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {rental.mode === 'lodging' || rental.mode === 'airbnb' ? (
-                      <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
-                        KES {rental.nightly_price}/night
-                      </span>
-                    ) : (
-                      <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
-                        KES {rental.price}/month
-                      </span>
-                    )}
-                    <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">{rental.type}</span>
-                    <span className="bg-yellow-700 text-white px-2 py-1 rounded text-xs">
-                      {rental.status === 'booked' ? 'Booked' : (rental.status || 'available')}
-                    </span>
-                    <span className="bg-gray-700 text-white px-2 py-1 rounded text-xs">
-                      Owner: {rental.users?.full_name || rental.full_name || 'N/A'}
-                    </span>
-                    <span className="bg-gray-700 text-white px-2 py-1 rounded text-xs">
-                      Contact: {rental.users?.phone || rental.phone || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="text-gray-700 text-sm mb-2">
-                    <strong>Town:</strong> {rental.town || 'N/A'}
-                    {rental.address && <> | <strong>Address:</strong> {rental.address}</>}
-                  </div>
-                  <div className="text-gray-700 text-sm mb-2">
-                    <strong>Bedrooms:</strong> {rental.bedrooms || 'N/A'} | <strong>Bathrooms:</strong> {rental.bathrooms || 'N/A'}
-                  </div>
-                  {rental.location && Array.isArray(rental.location.coordinates) && (
-                    <div className="mt-2">
-                      <MapComponent
-                        rentals={[
-                          {
-                            ...rental,
-                            location: {
-                              ...rental.location,
-                              coordinates: [
-                                rental.location.coordinates[0],
-                                rental.location.coordinates[1],
-                              ],
-                            },
-                          },
-                        ]}
-                        height="h-40"
-                      />
-                      <div className="text-sm text-gray-700 mt-1">
-                        Location: Lat {rental.location.coordinates[0]}, Lng {rental.location.coordinates[1]}
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    className="bg-gradient-to-r from-blue-700 to-purple-700 text-white px-3 py-1 rounded mt-2 font-semibold hover:from-yellow-400 hover:to-pink-500 hover:scale-105 transition-all duration-300"
-                    onClick={e => {
-                      e.stopPropagation(); // Prevent card click
-                      setShowChat(true);
-                      setChatRental(rental);
+              {availableRentals.map(rental => {
+                const landlordPhone = landlordPhones[rental.id];
+                const whatsappLink = landlordPhone
+                  ? `https://wa.me/${landlordPhone.replace(/^0/, '254')}`
+                  : null;
+                return (
+                  <div
+                    key={rental.id}
+                    className="bg-white/90 rounded-2xl shadow-xl p-5 flex flex-col mb-6 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all duration-300 outline-none border-2 border-transparent hover:border-yellow-400"
+                    tabIndex={0}
+                    role="button"
+                    onClick={() => navigate(`/rentals/${rental.id}`)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        navigate(`/rentals/${rental.id}`);
+                      }
                     }}
+                    title="Click to view full details"
                   >
-                    Chat with Landlord
-                  </button>
-                </div>
-              ))}
+                    <h4 className="font-bold text-lg mb-1 text-blue-900">{rental.title}</h4>
+                    {rental.images && rental.images.length > 0 && (
+                      <ImageCarousel
+                        images={Array.isArray(rental.images) ? rental.images : JSON.parse(rental.images)}
+                        alt={rental.title}
+                      />
+                    )}
+                    <p className="text-gray-700 text-sm mb-2">{rental.description}</p>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {rental.mode === 'lodging' || rental.mode === 'airbnb' ? (
+                        <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
+                          KES {rental.nightly_price}/night
+                        </span>
+                      ) : (
+                        <span className="bg-green-700 text-white px-2 py-1 rounded text-xs">
+                          KES {rental.price}/month
+                        </span>
+                      )}
+                      <span className="bg-blue-700 text-white px-2 py-1 rounded text-xs">{rental.type}</span>
+                      <span className="bg-yellow-700 text-white px-2 py-1 rounded text-xs">
+                        {rental.status === 'booked' ? 'Booked' : (rental.status || 'available')}
+                      </span>
+                      <span className="bg-gray-700 text-white px-2 py-1 rounded text-xs">
+                        Owner: {rental.users?.full_name || rental.full_name || 'N/A'}
+                      </span>
+                      <span className="bg-gray-700 text-white px-2 py-1 rounded text-xs">
+                        Contact: {landlordPhone || rental.users?.phone || rental.phone || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="text-gray-700 text-sm mb-2">
+                      <strong>Town:</strong> {rental.town || 'N/A'}
+                      {rental.address && <> | <strong>Address:</strong> {rental.address}</>}
+                    </div>
+                    <div className="text-gray-700 text-sm mb-2">
+                      <strong>Bedrooms:</strong> {rental.bedrooms || 'N/A'} | <strong>Bathrooms:</strong> {rental.bathrooms || 'N/A'}
+                    </div>
+                    {rental.location && Array.isArray(rental.location.coordinates) && (
+                      <div className="mt-2">
+                        <MapComponent
+                          rentals={[
+                            {
+                              ...rental,
+                              location: {
+                                ...rental.location,
+                                coordinates: [
+                                  rental.location.coordinates[0],
+                                  rental.location.coordinates[1],
+                                ],
+                              },
+                            },
+                          ]}
+                          height="h-40"
+                        />
+                        <div className="text-sm text-gray-700 mt-1">
+                          Location: Lat {rental.location.coordinates[0]}, Lng {rental.location.coordinates[1]}
+                        </div>
+                      </div>
+                    )}
+                    {whatsappLink && (
+                      <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-blue-500 hover:bg-green-600 text-white p-4 rounded mt-2 font-semibold text-xs transition-all duration-300"
+                        title="Chat with Landlord on WhatsApp"
+                      >
+                             WhatsApp Landlord
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
@@ -418,33 +322,6 @@ export default function ClientDashboard() {
             WhatsApp
           </a>
         </div>
-        {/* Chat Modal */}
-        {showChat && chatRental && (
-          <div className="fixed inset-0 z-[1000] flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black bg-opacity-80 z-[1000] pointer-events-auto"
-              onClick={() => setShowChat(false)}
-            />
-            {/* Modal */}
-            <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-2 z-[1010] flex flex-col border-2 border-purple-700">
-              <button
-                className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl"
-                onClick={() => setShowChat(false)}
-              >
-                &times;
-              </button>
-              <h3 className="font-semibold mb-2 text-lg text-blue-700 text-center">
-                Chat with Landlord for: <span className="text-black">{chatRental.title}</span>
-              </h3>
-              <Chat
-                userId={user?.id}
-                rentalId={chatRental?.id}
-                receiverId={chatRental?.landlord_id}
-              />
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );

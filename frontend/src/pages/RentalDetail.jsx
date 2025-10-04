@@ -32,12 +32,6 @@ export default function RentalDetail() {
           return;
         }
         setRental(res.data);
-
-        // Fetch landlord details if needed
-        if (res.data.user_id) {
-          const userRes = await api.get(`/users/${res.data.user_id}`);
-          setLandlord(userRes.data);
-        }
       } catch (err) {
         console.error('Failed to load rental:', err.message);
         navigate('/dashboard');
@@ -46,6 +40,15 @@ export default function RentalDetail() {
 
     fetchRental();
   }, [id, navigate]);
+
+  // Fetch landlord phone
+  useEffect(() => {
+    if (rental && rental.user_id) {
+      api.get(`/users/${rental.user_id}`)
+        .then(res => setLandlord(res.data))
+        .catch(() => setLandlord(null));
+    }
+  }, [rental]);
 
   // For landlord: fetch clients who have messaged about this rental
   useEffect(() => {

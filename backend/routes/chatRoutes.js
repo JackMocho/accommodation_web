@@ -31,13 +31,15 @@ router.post('/:conversationId/messages', authenticate, async (req, res) => {
   }
 });
 
-// Get recent messages for a user
+// Get recent messages for a user (inbox)
 router.get('/messages/recent/:userId', authenticate, async (req, res) => {
-  const userId = req.params.userId;
+  const userId = parseInt(req.params.userId, 10);
   try {
-    // Example: get last 20 messages for this user (adjust query as needed)
+    // Get last 20 messages where user is sender or receiver
     const messages = await db.query(
-      'SELECT * FROM messages WHERE sender_id = $1 OR receiver_id = $1 ORDER BY created_at DESC LIMIT 20',
+      `SELECT * FROM messages 
+       WHERE sender_id = $1 OR receiver_id = $1 
+       ORDER BY created_at DESC LIMIT 20`,
       [userId]
     );
     res.json(messages.rows);
@@ -47,13 +49,15 @@ router.get('/messages/recent/:userId', authenticate, async (req, res) => {
   }
 });
 
-// Get all messages for a rental (by rentalId)
+// Get all messages for a rental (thread)
 router.get('/messages/:rentalId', authenticate, async (req, res) => {
   const rentalId = parseInt(req.params.rentalId, 10);
   if (isNaN(rentalId)) return res.status(400).json({ error: 'Invalid rental ID' });
   try {
     const messages = await db.query(
-      'SELECT * FROM messages WHERE rental_id = $1 ORDER BY created_at ASC',
+      `SELECT * FROM messages 
+       WHERE rental_id = $1 
+       ORDER BY created_at ASC`,
       [rentalId]
     );
     res.json(messages.rows);
@@ -62,13 +66,27 @@ router.get('/messages/:rentalId', authenticate, async (req, res) => {
   }
 });
 
-// Send a message
+// Send a message (from client or landlord)
 router.post('/send', authenticate, async (req, res) => {
-  // Your message sending logic here
-  // Example:
-  // const { rentalId, senderId, receiverId, message } = req.body;
-  // Save to DB, then:
-  res.json({ success: true });
+  const { rental_id, sender_id, receiver_id, message, parent_id } = req.body;
+  if (!rental_id || !sender_id || !receiver_id || !message) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    const payload = {
+      sender_id,
+      receiver_id,
+      rental_id,
+      parent_id: parent_id || null,
+      message,
+      created_at: new Date()
+    };
+    const result = await db.insert('messages', payload, '*');
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
 });
 
 module.exports = router;
