@@ -289,7 +289,9 @@ export default function AdminDashboard() {
               <span className="font-bold text-green-300">{stats.totalRentals || 0}</span> Rentals
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-lg px-6 py-4 text-lg text-white shadow">
-              <span className="font-bold text-blue-300">{stats.activeRentals || 0}</span> Active
+              <span className="font-bold text-blue-300">
+                {rentals.filter(r => r.status === 'available').length}
+              </span> Active
             </div>
           </div>
         </section>
@@ -440,9 +442,7 @@ export default function AdminDashboard() {
                       <td className="p-2">
                         <button onClick={() => handleSuspendUser(u.id)} className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded mr-2 text-white shadow transition">Suspend</button>
                         <button onClick={() => handleDeleteUser(u.id)} className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded mr-2 text-white shadow transition">Delete</button>
-                        {u.role !== 'admin' && (
-                          <button onClick={() => handlePromoteToAdmin(u.id)} className="bg-purple-700 hover:bg-purple-800 px-3 py-1 rounded text-white shadow transition">Make Admin</button>
-                        )}
+                        {/* Removed Make Admin button */}
                       </td>
                       <td className="p-2">
                         <button
