@@ -69,7 +69,7 @@ router.post('/register', async (req, res) => {
 
     const token = await signToken({ id: created.id });
 
-    res.json({ user, token, message: 'Registration successful' });
+    res.json({ user, token, message: 'Registration successful, You can Contact Administrator for approval' });
   } catch (err) {
     console.error('Register error:', err.stack || err);
     return res.status(500).json({ error: err.message || 'Registration failed' });
