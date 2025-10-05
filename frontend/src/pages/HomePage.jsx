@@ -159,6 +159,7 @@ export default function HomePage() {
                     <img
                       src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
                       alt="Rental"
+                      loading="lazy" // <-- Add this line
                       className="w-full h-48 object-cover rounded-xl mb-4 transition-transform duration-300 group-hover:scale-105 shadow-lg"
                     />
                   )}
@@ -222,21 +223,19 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-                    {/* Stats Section */}
+        {/* Stats Section */}
         <section
-          className="py-16 px-4 rounded-b-3xl shadow-2xl relative overflow-hidden"
-          style={{
-            backgroundImage: `url(${img20})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+          className="py-8 px-2 rounded-b-xl shadow-lg relative overflow-hidden bg-gray-900/80"
         >
           {/* Overlay for readability */}
-          <div className="absolute inset-0  z-0"></div>
-          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 text-center relative z-10">
+          <div className="absolute inset-0 z-0"></div>
+          <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 text-center relative z-10">
             <StatCard label="Total Users" value={stats?.users ?? 0} />
             <StatCard label="Total Rentals" value={stats?.rentals ?? 0} />
-            <StatCard label="Active Listings" value={stats?.activeRentals ?? 0} />
+            <StatCard
+              label="Active Rentals"
+              value={rentals.filter(r => r.status === 'available').length}
+            />
           </div>
         </section>
         {/* Features */}
@@ -287,9 +286,9 @@ export default function HomePage() {
 
 function StatCard({ label, value }) {
   return (
-    <div className="bg-gray-700/90 p-10 rounded-2xl shadow-xl border-2 border-purple-600 transform transition hover:scale-105 hover:border-yellow-400 duration-300">
-      <h3 className="text-4xl md:text-5xl font-bold text-yellow-300 mb-3">{value}</h3>
-      <p className="mt-2 text-gray-200 text-xl">{label}</p>
+    <div className="bg-gray-800/90 p-5 rounded-xl shadow border border-purple-500 transform transition hover:scale-105 hover:border-yellow-400 duration-300">
+      <h3 className="text-2xl md:text-3xl font-bold text-yellow-300 mb-1">{value}</h3>
+      <p className="mt-1 text-gray-200 text-base">{label}</p>
     </div>
   );
 }
