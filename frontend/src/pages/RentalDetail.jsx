@@ -201,14 +201,20 @@ export default function RentalDetail() {
             rel="noopener noreferrer"
             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded inline-block mb-4"
           >
-            Chat with Landlord on WhatsApp
+            WhatsApp Here
           </a>
         ) : (
           <p className="text-gray-400 mb-4">Landlord phone not available.</p>
         )}
-        {decoded && decoded.id !== rental.owner_id ? (
-          <Chat rentalId={rental.id} userId={decoded.id} landlordId={rental.owner_id} />
-        ) : (
+        {/* Only render Chat if decoded and decoded.id exist */}
+        {decoded && decoded.id && decoded.id !== rental.owner_id ? (
+          // Client view: send message to landlord
+          <Chat
+            rentalId={rental.id}
+            userId={decoded.id}
+            receiverId={rental.owner_id}
+          />
+        ) : isLandlord && decoded && decoded.id ? (
           <>
             <p className="text-gray-500 mb-2">You are the owner. Select a client to reply:</p>
             {clients.length === 0 ? (
@@ -233,12 +239,13 @@ export default function RentalDetail() {
               <Chat
                 rentalId={rental.id}
                 userId={decoded.id}
-                landlordId={rental.owner_id}
-                clientId={selectedClient.id}
+                receiverId={selectedClient.id}
                 isLandlord={true}
               />
             )}
           </>
+        ) : (
+          <p className="text-gray-400">You must be logged in to chat.</p>
         )}
       </section>
     </div>
