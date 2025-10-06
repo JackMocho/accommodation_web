@@ -13,6 +13,7 @@ const originalAppUse = app.use.bind(app);
 app.use = function (firstArg, ...rest) {
   if (typeof firstArg === 'string' && (firstArg.startsWith('http://') || firstArg.startsWith('https://') || firstArg.includes('?'))) {
     console.error(`Invalid app.use() mount path detected: ${firstArg}`);
+    console.trace();
     throw new Error(`Invalid mount path for app.use(): "${firstArg}". Use a path starting with '/' (no protocol, host, or query string).`);
   }
   return originalAppUse(firstArg, ...rest);
