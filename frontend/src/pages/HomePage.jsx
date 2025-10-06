@@ -150,39 +150,45 @@ export default function HomePage() {
               </select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-              {randomRentals.map((rental, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gray-600 rounded-2xl shadow-xl p-5 flex flex-col items-center transform transition hover:scale-105 hover:shadow-2xl duration-300 group border-2 border-transparent hover:border-yellow-400"
-                >
-                  {rental.images && rental.images.length > 0 && (
-                    <img
-                      src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
-                      alt="Rental"
-                      loading="lazy" // <-- Add this line
-                      className="w-full h-48 object-cover rounded-xl mb-4 transition-transform duration-300 group-hover:scale-105 shadow-lg"
-                    />
-                  )}
-                  <h4
-                    className={`text-xl font-bold mb-1 text-white group-hover:text-purple-300 transition ${
-                      !isAuthenticated ? 'blur-sm select-none pointer-events-none' : ''
-                    }`}
-                    title={!isAuthenticated ? 'Login to view title' : rental.title}
-                  >
-                    {!isAuthenticated ? 'Login to view title' : rental.title}
-                  </h4>
-                  <p className="text-gray-300 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
-                  {rental.mode === 'lodging' ? (
-                    <span className="bg-green-700 text-white px-4 py-1 rounded text-sm shadow">
-                      KES {rental.nightly_price}/night
-                    </span>
-                  ) : (
-                    <span className="bg-blue-700 text-white px-4 py-1 rounded text-sm shadow">
-                      KES {rental.price}/month
-                    </span>
-                  )}
+              {randomRentals.length === 0 ? (
+                <div className="col-span-3 flex justify-center items-center h-48">
+                  <span className="text-xl text-gray-300 animate-pulse">Loading...</span>
                 </div>
-              ))}
+              ) : (
+                randomRentals.map((rental, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-gray-600 rounded-2xl shadow-xl p-5 flex flex-col items-center transform transition hover:scale-105 hover:shadow-2xl duration-300 group border-2 border-transparent hover:border-yellow-400"
+                  >
+                    {rental.images && rental.images.length > 0 && (
+                      <img
+                        src={Array.isArray(rental.images) ? rental.images[0] : JSON.parse(rental.images)[0]}
+                        alt="Rental"
+                        loading="lazy"
+                        className="w-full h-48 object-cover rounded-xl mb-4 transition-transform duration-300 group-hover:scale-105 shadow-lg"
+                      />
+                    )}
+                    <h4
+                      className={`text-xl font-bold mb-1 text-white group-hover:text-purple-300 transition ${
+                        !isAuthenticated ? 'blur-sm select-none pointer-events-none' : ''
+                      }`}
+                      title={!isAuthenticated ? 'Login to view title' : rental.title}
+                    >
+                      {!isAuthenticated ? 'Login to view title' : rental.title}
+                    </h4>
+                    <p className="text-gray-300 text-sm mb-2">{rental.description?.slice(0, 60)}...</p>
+                    {rental.mode === 'lodging' ? (
+                      <span className="bg-green-700 text-white px-4 py-1 rounded text-sm shadow">
+                        KES {rental.nightly_price}/night
+                      </span>
+                    ) : (
+                      <span className="bg-blue-700 text-white px-4 py-1 rounded text-sm shadow">
+                        KES {rental.price}/month
+                      </span>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
           <div className="flex justify-center mt-12">
