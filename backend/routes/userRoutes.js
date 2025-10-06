@@ -47,4 +47,16 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Save user location
+router.post('/location', authenticate, async (req, res) => {
+  const { latitude, longitude } = req.body;
+  try {
+    await db.update('users', { id: req.user.id }, { latitude, longitude });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save location' });
+  }
+});
+
 module.exports = router;

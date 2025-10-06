@@ -44,6 +44,27 @@ export default function Login() {
     }
   };
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    // ...login logic...
+    if (loginSuccess) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { latitude, longitude } = position.coords;
+          await api.post(
+            '/user/location',
+            { latitude, longitude },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+              },
+            }
+          );
+        });
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
       {/* Background image */}

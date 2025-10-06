@@ -63,6 +63,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 const authRoutes = require('./routes/authRoutes');
 const rentalRoutes = require('./routes/rentalRoutes');
 const userRoutes = require('./routes/userRoutes');
+app.use('/api/user', userRoutes);
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
 const chatRoutes = require('./routes/chatRoutes');
