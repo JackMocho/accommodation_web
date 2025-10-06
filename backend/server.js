@@ -57,6 +57,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploads/static if needed
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
+// Serve static files from frontend build
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
 // Mount routes using path strings only (no full URLs)
 const authRoutes = require('./routes/authRoutes');
 const rentalRoutes = require('./routes/rentalRoutes');
@@ -72,6 +75,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stats', statsRoutes);
+
+// Catch-all: send index.html for any non-API route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
 
 // Initialize WebSocket server with HTTP server
 const initWebsocket = require('./websocket');
