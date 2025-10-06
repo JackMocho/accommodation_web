@@ -19,12 +19,12 @@ app.use = function (firstArg, ...rest) {
   return originalAppUse(firstArg, ...rest);
 };
 
-// Patch Router.prototype.use to catch router.use(...) mistakes too
 const expressRouter = require('express').Router;
 const origRouterUse = expressRouter.prototype.use;
 expressRouter.prototype.use = function (firstArg, ...rest) {
   if (typeof firstArg === 'string' && (firstArg.startsWith('http://') || firstArg.startsWith('https://') || firstArg.includes('?'))) {
     console.error(`Invalid router.use() mount path detected: ${firstArg}`);
+    console.trace();
     throw new Error(`Invalid mount path for router.use(): "${firstArg}". Use a path starting with '/' (no protocol, host, or query string).`);
   }
   return origRouterUse.call(this, firstArg, ...rest);
@@ -58,8 +58,6 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploads/static if needed
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-// Serve static files from frontend build
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Mount routes using path strings only (no full URLs)
 const authRoutes = require('./routes/authRoutes');
@@ -76,11 +74,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stats', statsRoutes);
-
-// Catch-all: send index.html for any non-API route
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
 
 // Initialize WebSocket server with HTTP server
 const initWebsocket = require('./websocket');
