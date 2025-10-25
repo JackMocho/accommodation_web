@@ -116,6 +116,8 @@ export default function SubmitRental() {
       landlord_id: ownerId,
       owner_id: ownerId,
       user_id: ownerId,
+      // ensure DB trigger that expects "city" has the field
+      city: form.town
     };
 
     try {
