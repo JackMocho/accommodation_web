@@ -33,9 +33,10 @@ export default function SubmitRental() {
 
   useEffect(() => {
     if (typeof lat === 'number' && typeof lng === 'number') {
+      // GeoJSON: [longitude, latitude]
       setForm((f) => ({
         ...f,
-        location: { type: 'Point', coordinates: [lat, lng] },
+        location: { type: 'Point', coordinates: [lng, lat] },
       }));
     }
   }, [lat, lng]);
@@ -92,7 +93,9 @@ export default function SubmitRental() {
     }
 
     let location = form.location;
+    // When building fallback:
     if (!location && latitude !== null && longitude !== null) {
+      // note: coordinates order [lng, lat]
       location = { type: 'Point', coordinates: [longitude, latitude] };
     }
 

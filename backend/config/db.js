@@ -53,8 +53,17 @@ async function insert(table, data = {}, returning = '*') {
   }
   const cols = keys.map(k => `"${k}"`).join(', ');
   const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+
+  // Serialize objects/arrays to valid JSON strings for JSON/JSONB columns
+  const serialize = v => {
+    if (v === null || v === undefined) return null;
+    if (Array.isArray(v) || (typeof v === 'object' && !(v instanceof Date))) return JSON.stringify(v);
+    return v;
+  };
+  const serializedVals = vals.map(serialize);
+
   const text = `INSERT INTO "${table}" (${cols}) VALUES (${placeholders}) RETURNING ${returning};`;
-  const res = await query(text, vals);
+  const res = await query(text, serializedVals);
   return res.rows[0];
 }
 
