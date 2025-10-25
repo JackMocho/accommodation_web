@@ -103,11 +103,13 @@ export default function SubmitRental() {
     const price = form.price === '' ? null : Number(form.price);
     const nightly_price = form.nightly_price === '' ? null : Number(form.nightly_price);
 
+    // build payload in handleSubmit
     const payload = {
       ...form,
       price,
       nightly_price,
-      coordinates: form.coordinates,
+      // send coordinates as array (GeoJSON order: [lng, lat]) or null
+      coordinates: location ? location.coordinates : (latitude !== null && longitude !== null ? [longitude, latitude] : null),
       latitude,
       longitude,
       location,

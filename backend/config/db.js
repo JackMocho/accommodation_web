@@ -54,10 +54,17 @@ async function insert(table, data = {}, returning = '*') {
   const cols = keys.map(k => `"${k}"`).join(', ');
   const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
 
-  // Serialize objects/arrays to valid JSON strings for JSON/JSONB columns
   const serialize = v => {
     if (v === null || v === undefined) return null;
+    // stringify arrays and plain objects
     if (Array.isArray(v) || (typeof v === 'object' && !(v instanceof Date))) return JSON.stringify(v);
+    if (typeof v === 'string') {
+      const s = v.trim();
+      // string looks like a data URI, looks like JSON text, or looks like "num,num" coords -> stringify it
+      if (s.startsWith('data:') || s.startsWith('[') || s.startsWith('{') || /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(s)) {
+        return JSON.stringify(v);
+      }
+    }
     return v;
   };
   const serializedVals = vals.map(serialize);
@@ -73,8 +80,23 @@ async function update(table, conditions = {}, data = {}, returning = '*') {
   if (setKeys.length === 0) return null;
   const setParts = setKeys.map((k, i) => `"${k}" = $${i + 1}`);
   const { clause, params: whereParams } = _buildWhere(conditions, setKeys.length + 1);
+
+  const serialize = v => {
+    if (v === null || v === undefined) return null;
+    if (Array.isArray(v) || (typeof v === 'object' && !(v instanceof Date))) return JSON.stringify(v);
+    if (typeof v === 'string') {
+      const s = v.trim();
+      if (s.startsWith('data:') || s.startsWith('[') || s.startsWith('{') || /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(s)) {
+        return JSON.stringify(v);
+      }
+    }
+    return v;
+  };
+  const serializedSetVals = setVals.map(serialize);
+  const serializedWhereParams = (whereParams || []).map(serialize);
+
   const text = `UPDATE "${table}" SET ${setParts.join(', ')} ${clause} RETURNING ${returning};`;
-  const res = await query(text, [...setVals, ...whereParams]);
+  const res = await query(text, [...serializedSetVals, ...serializedWhereParams]);
   return res.rows;
 }
 
