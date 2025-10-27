@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Chat({ userId: userIdProp, rentalId, receiverId }) {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   // prefer UUID from auth context, fall back to prop (keeps backward compatibility)
   const userId = user?.id || userIdProp;
 
