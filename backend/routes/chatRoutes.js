@@ -70,7 +70,7 @@ router.get('/messages/:rentalId', authenticate, async (req, res) => {
 });
 
 // Get messages between two users (conversation)
-router.get('/messages/:otherId', authMiddleware, async (req, res) => {
+router.get('/messages/:otherId', authenticate, async (req, res) => {
   const userId = req.user && req.user.id;
   const otherId = req.params.otherId;
 
