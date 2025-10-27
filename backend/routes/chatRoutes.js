@@ -36,7 +36,11 @@ router.post('/:conversationId/messages', authenticate, async (req, res) => {
 
 // Get recent messages for a user (inbox)
 router.get('/messages/recent/:userId', authenticate, async (req, res) => {
-  const userId = parseInt(req.params.userId, 10);
+  // treat userId as string (UUID) and validate
+  const userId = req.params.userId;
+  if (!uuidV4Regex.test(userId)) {
+    return res.status(400).json({ error: 'Invalid userId: expected UUID' });
+  }
   try {
     // Get last 20 messages where user is sender or receiver
     const messages = await db.query(
@@ -97,15 +101,30 @@ router.get('/messages/:otherId', authenticate, async (req, res) => {
 
 // Send a message (from client or landlord)
 router.post('/send', authenticate, async (req, res) => {
-  const { rental_id, sender_id, receiver_id, message, parent_id } = req.body;
-  if (!rental_id || !sender_id || !receiver_id || !message) {
+  // enforce sender as authenticated user (prevent client from faking numeric id)
+  const sender_id = req.user && req.user.id;
+  const { rental_id, receiver_id, message, parent_id } = req.body;
+
+  if (!sender_id || !receiver_id || !message || typeof rental_id === 'undefined') {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+
+  // validate UUIDs where expected
+  if (!uuidV4Regex.test(sender_id) || !uuidV4Regex.test(receiver_id)) {
+    return res.status(400).json({ error: 'Invalid UUID for sender or receiver' });
+  }
+
+  // rental_id may be an integer id in your schema; keep numeric check
+  const rentalIdNum = Number(rental_id);
+  if (!Number.isInteger(rentalIdNum)) {
+    return res.status(400).json({ error: 'Invalid rental_id: expected integer' });
+  }
+
   try {
     const payload = {
       sender_id,
       receiver_id,
-      rental_id,
+      rental_id: rentalIdNum,
       parent_id: parent_id || null,
       message,
       created_at: new Date()
