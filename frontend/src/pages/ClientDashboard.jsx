@@ -94,7 +94,15 @@ export default function ClientDashboard() {
       try {
         const res = await api.get('/rentals');
         let filtered = res.data;
-        filtered = filtered.filter(r => r.status === 'available' && r.approved === true);
+        filtered = filtered.filter(r => {
+          const statusOk = r.status && String(r.status).toLowerCase() === 'available';
+          const approved = r.approved;
+          const approvedOk =
+            approved === true ||
+            String(approved).toLowerCase() === 'true' ||
+            Number(approved) === 1;
+          return statusOk && approvedOk;
+        });
         if (propertyType !== 'all') {
           filtered = filtered.filter(r => r.mode === propertyType);
         }

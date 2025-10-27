@@ -112,8 +112,11 @@ export default function LandlordDashboard() {
       });
       let data = res.data;
       if (Array.isArray(data)) {
+        const uid = String(userId);
         data = data
-          .filter(r => r.user_id === Number(userId))
+          .filter(r =>
+            [r.user_id, r.owner_id, r.landlord_id].map(v => (v === undefined || v === null) ? '' : String(v)).includes(uid)
+          )
           .map(r => ({
             ...r,
             images: Array.isArray(r.images)
