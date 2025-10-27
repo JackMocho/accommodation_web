@@ -66,6 +66,16 @@ export default function Chat({ userId, rentalId, receiverId }) {
     }
   };
 
+  const openConversation = async (otherUser) => {
+    // otherUser.id must be the UUID stored in the DB
+    if (!otherUser?.id) return;
+    const res = await fetch(`/api/chat/messages/${otherUser.id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setMessages(data);
+    }
+  };
+
   return (
     <div className="bg-gray-800 p-4 rounded shadow">
       <h3 className="font-semibold mb-4">Chat with Landlord</h3>
@@ -97,6 +107,9 @@ export default function Chat({ userId, rentalId, receiverId }) {
           Send
         </button>
       </div>
+      <button onClick={openConversation} className="mt-2 bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded">
+        Open Conversation
+      </button>
     </div>
   );
 }

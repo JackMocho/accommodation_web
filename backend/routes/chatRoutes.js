@@ -3,6 +3,9 @@ const db = require('../config/db');
 const { authenticate } = require('../middleware/authMiddleware');
 const router = express.Router();
 
+// add UUID validator
+const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 // Get messages for a conversation (conversation_id)
 router.get('/:conversationId/messages', authenticate, async (req, res) => {
   try {
@@ -63,6 +66,32 @@ router.get('/messages/:rentalId', authenticate, async (req, res) => {
     res.json(messages.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Get messages between two users (conversation)
+router.get('/messages/:otherId', authMiddleware, async (req, res) => {
+  const userId = req.user && req.user.id;
+  const otherId = req.params.otherId;
+
+  // Validate UUIDs before querying DB
+  if (!userId || !uuidV4Regex.test(userId) || !uuidV4Regex.test(otherId)) {
+    return res.status(400).json({ error: 'Invalid UUID format for user id(s)' });
+  }
+
+  try {
+    const { rows } = await db.query(
+      `SELECT *
+         FROM messages
+        WHERE (sender_id = $1 AND receiver_id = $2)
+           OR (sender_id = $2 AND receiver_id = $1)
+     ORDER BY created_at ASC`,
+      [userId, otherId]
+    );
+    return res.json(rows);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
